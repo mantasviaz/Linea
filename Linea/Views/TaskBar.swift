@@ -1,5 +1,5 @@
 //
-//  TaskView.swift
+//  TaskBar.swift
 //  Linea
 //
 //  
@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-struct TaskView: View {
+struct TaskBar: View {
     var body: some View {
         Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
     }
 }
 
 #Preview {
-    TaskView()
+    TaskBar()
 }
