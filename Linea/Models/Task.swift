@@ -4,8 +4,9 @@
 //
 
 import Foundation
+import SwiftUI
 
-struct Task: Identifiable {
+struct Task: Identifiable, Equatable {
     let id: UUID
     var group: String
     var title: String
