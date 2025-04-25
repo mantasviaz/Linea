@@ -8,28 +8,36 @@ import SwiftUI
 
 @Observable
 class TaskViewModel {
-    var tasks: [Task]
-
-    init() {
-        self.tasks = Task.samples
-        self.tasks.sort(by: { $0.end < $1.end })
+    var tasks: [Task] = Task.samples.sorted { $0.end < $1.end }
+    var groups: [String: Color] = [:]
+    
+    var windowOrigin: Date {
+        let nowMidnight = Calendar.current.startOfDay(for: Date())
+        return Calendar.current.date(byAdding: .year, value: -1, to: nowMidnight)!
     }
 
-
     var visibleWindow: ClosedRange<Date> {
-        let now = Date()
-        return now.addingTimeInterval(-7 * 24 * 3600)...now.addingTimeInterval(7 * 24 * 3600)
+        let start = windowOrigin
+        let end = Calendar.current.date(byAdding: .year, value: 2, to: windowOrigin)
+        return start...end!
     }
     
     func xPosition(for date: Date, dayWidth: CGFloat) -> CGFloat {
-        let totalDays = visibleWindow.upperBound.timeIntervalSince(visibleWindow.lowerBound) / 86400
-        let frac = date.timeIntervalSince(visibleWindow.lowerBound) / (totalDays * 86400)
-        return CGFloat(frac) * totalDays * dayWidth
+        let cal          = Calendar.current
+        let wholeDays    = cal.dateComponents([.day], from: windowOrigin, to: date).day!
+        let midnightThatDay = cal.date(byAdding: .day, value: wholeDays, to: windowOrigin)!
+        let secondsIntoDay  = date.timeIntervalSince(midnightThatDay)
+        let fraction        = secondsIntoDay / (24 * 3_600)
+        return (CGFloat(wholeDays) + CGFloat(fraction)) * dayWidth
     }
     
-    func update (_ task: Task) {
-        guard let idx = tasks.firstIndex(of: task) else { return }
-        tasks[idx] = task
+    func update(_ task: Task) {
+        if let idx = tasks.firstIndex(where: { $0.id == task.id }) {
+            tasks[idx] = task           // existing task edited
+        } else {
+            tasks.append(task)          // new task added
+        }
+        tasks.sort { $0.end < $1.end }
     }
 }
 
@@ -42,17 +50,17 @@ extension Task {
         return [
             Task(
                 id: UUID(),
-                group: "Design",
-                title: "Create Wireframes",
-                start: formatter.date(from: "2025-04-21 09:00")!,
-                end: formatter.date(from: "2025-04-23 12:00")!
+                group: "Testing",
+                title: "Midnight",
+                start: formatter.date(from: "2025-04-24 00:00")!,
+                end: formatter.date(from: "2025-04-25 00:00")!
             ),
             Task(
                 id: UUID(),
                 group: "Development",
-                title: "Implement Feature A",
-                start: formatter.date(from: "2025-04-23 13:00")!,
-                end: formatter.date(from: "2025-04-25 17:00")!
+                title: "Noon",
+                start: formatter.date(from: "2025-04-23 12:00")!,
+                end: formatter.date(from: "2025-04-24 12:00")!
             ),
             Task(
                 id: UUID(),
@@ -66,14 +74,14 @@ extension Task {
                 group: "PM",
                 title: "Sprint Review",
                 start: formatter.date(from: "2025-04-22 15:00")!,
-                end: formatter.date(from: "2025-04-23 16:30")!
+                end: formatter.date(from: "2025-04-24 19:41")!
             ),
             Task(
                 id: UUID(),
                 group: "Team",
-                title: "Retrospective",
-                start: formatter.date(from: "2025-04-25 11:00")!,
-                end: formatter.date(from: "2025-04-25 12:00")!
+                title: "Test",
+                start: formatter.date(from: "2025-04-24 00:00")!,
+                end: formatter.date(from: "2025-04-25 00:00")!
             ),
             Task(
                 id: UUID(),
