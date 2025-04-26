@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVKit
+import GoogleSignIn
 
 
 struct LoginView: View {
@@ -104,6 +105,30 @@ class LoopingPlayerUIView: UIView {
 
 extension LoginView {
     private func loginCard(logo: String, brand: String) -> some View {
+        Group {
+            if brand == "Google" {
+                Button(action: {
+                    handleGoogleSignupButton()
+                }) {
+                    cardContent(logo: logo, brand: brand)
+                }
+            } else {
+                cardContent(logo: logo, brand: brand)
+            }
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 0)
+        .frame(width: 308, height: 54, alignment: .center)
+        .background(!brand.isEmpty ? .white : .black)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .inset(by: 0.5)
+                .stroke(brand.isEmpty ? Color(red: 0.3, green: 0.3, blue: 0.3) : .black, lineWidth: 2)
+        )
+        .cornerRadius(14)
+    }
+    
+    private func cardContent(logo: String, brand: String) -> some View {
         HStack(alignment: .center, spacing: 5) {
             if brand == "Apple" {
                 Image(systemName: logo)
@@ -119,15 +144,46 @@ extension LoginView {
                 .foregroundColor(!brand.isEmpty ? .black : .white)
                 .padding(.leading, 5)
         }
-        .padding(.horizontal, 15)
-        .padding(.vertical, 0)
-        .frame(width: 308, height: 54, alignment: .center)
-        .background(!brand.isEmpty ? .white : .black)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-            .inset(by: 0.5)
-            .stroke(brand.isEmpty ? Color(red: 0.3, green: 0.3, blue: 0.3) : .black, lineWidth: 2)
-        )
-        .cornerRadius(14)
     }
+    
+    private func handleGoogleSignupButton() {
+        print("Google Sign-Up Button Pressed")
+        
+        if let rootViewController = getRootViewController() {
+            GIDSignIn.sharedInstance.signIn(
+                withPresenting: rootViewController
+            ) { result, error in
+                guard let result else {
+                    // inspect error
+                    return
+                }
+                // do something with result
+                print(result.user.profile?.name)
+                print(result.user.profile?.email)
+            }
+        }
+    
+    }
+}
+
+
+func getRootViewController() -> UIViewController? {
+    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let rootViewConroller = scene.windows.first?.rootViewController else {
+        return nil
+    }
+    return getVisibleViewController(from: rootViewConroller)
+}
+
+private func getVisibleViewController(from vc: UIViewController) -> UIViewController {
+    if let nav = vc as? UINavigationController {
+        return getVisibleViewController(from: nav.visibleViewController!)
+    }
+    if let tab = vc as? UITabBarController {
+        return getVisibleViewController(from: tab.selectedViewController!)
+    }
+    if let presented = vc.presentedViewController {
+        return getVisibleViewController(from: presented)
+    }
+    return vc
 }
