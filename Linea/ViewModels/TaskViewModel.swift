@@ -10,6 +10,14 @@ import SwiftUI
 class TaskViewModel {
     var tasks: [Task] = Task.samples.sorted { $0.end < $1.end }
     var groups: [String: Color] = [:]
+    var colors: [String: Color] = ["Blue": Color(red: 0.8, green: 0.89, blue: 1), "Red": Color(red: 1, green: 0.76, blue: 0.76), "Orange": Color(red: 1, green: 0.87, blue: 0.65), "Green": Color(red: 0.84, green: 0.95, blue: 0.77), "Purple": Color(red: 0.89, green: 0.84, blue: 0.95)]
+    
+    //TODO: Delete later
+    init() {
+        self.groups = [
+            "Blue": colors["Blue"]!, "Red": colors["Red"]!, "Orange": colors["Orange"]!, "Green": colors["Green"]!, "Purple": colors["Purple"]!
+        ]
+    }
     
     var windowOrigin: Date {
         let nowMidnight = Calendar.current.startOfDay(for: Date())
@@ -39,6 +47,10 @@ class TaskViewModel {
         }
         tasks.sort { $0.end < $1.end }
     }
+    
+    func addGroup(name: String, color: Color) {
+        groups[name] = color
+    }
 }
 
 extension Task {
@@ -50,80 +62,52 @@ extension Task {
         return [
             Task(
                 id: UUID(),
-                group: "Testing",
-                title: "Midnight",
+                group: "Blue",
+                title: "Blue",
                 start: formatter.date(from: "2025-04-24 00:00")!,
                 end: formatter.date(from: "2025-04-25 00:00")!
             ),
             Task(
                 id: UUID(),
-                group: "Development",
-                title: "Noon",
+                group: "Green",
+                title: "Green",
                 start: formatter.date(from: "2025-04-23 12:00")!,
                 end: formatter.date(from: "2025-04-24 12:00")!
             ),
             Task(
                 id: UUID(),
-                group: "QA",
-                title: "Test New Builds",
+                group: "Red",
+                title: "Red",
                 start: formatter.date(from: "2025-04-22 10:00")!,
                 end: formatter.date(from: "2025-04-26 14:00")!
             ),
             Task(
                 id: UUID(),
-                group: "PM",
-                title: "Sprint Review",
+                group: "Purple",
+                title: "Purple",
                 start: formatter.date(from: "2025-04-22 15:00")!,
                 end: formatter.date(from: "2025-04-24 19:41")!
             ),
             Task(
                 id: UUID(),
-                group: "Team",
-                title: "Test",
+                group: "Orange",
+                title: "Orange",
                 start: formatter.date(from: "2025-04-24 00:00")!,
                 end: formatter.date(from: "2025-04-25 00:00")!
             ),
             Task(
                 id: UUID(),
-                group: "QA",
+                group: "Orange",
                 title: "Test New Builds",
                 start: formatter.date(from: "2025-04-21 10:00")!,
                 end: formatter.date(from: "2025-04-27 14:00")!
             ),
             Task(
                 id: UUID(),
-                group: "PM",
-                title: "Sprint Review",
+                group: "Blue",
+                title: "CIS 3200 - HW 4",
                 start: formatter.date(from: "2025-04-21 15:00")!,
                 end: formatter.date(from: "2025-04-23 16:30")!
-            ),
-            Task(
-                id: UUID(),
-                group: "Team",
-                title: "Retrospective",
-                start: formatter.date(from: "2025-04-22 11:00")!,
-                end: formatter.date(from: "2025-04-25 12:00")!
-            ),
-            Task(
-                id: UUID(),
-                group: "QA",
-                title: "Test New Builds",
-                start: formatter.date(from: "2025-04-25 10:00")!,
-                end: formatter.date(from: "2025-04-27 14:00")!
-            ),
-            Task(
-                id: UUID(),
-                group: "PM",
-                title: "Sprint Review",
-                start: formatter.date(from: "2025-04-21 15:00")!,
-                end: formatter.date(from: "2025-04-27 16:30")!
-            ),
-            Task(
-                id: UUID(),
-                group: "Team",
-                title: "Retrospective",
-                start: formatter.date(from: "2025-04-21 11:00")!,
-                end: formatter.date(from: "2025-04-25 12:00")!
             )
         ]
     }()

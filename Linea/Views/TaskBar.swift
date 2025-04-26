@@ -2,11 +2,12 @@
 //  TaskBar.swift
 //  Linea
 //
-//  
+//
 //
 
 import SwiftUI
 import Observation
+import UIKit
 
 struct TaskBar: View {
     @Binding var task: Task
@@ -17,35 +18,67 @@ struct TaskBar: View {
     var body: some View {
         let startX = taskViewModel.xPosition(for: task.start, dayWidth: dayWidth)
         let width = taskViewModel.xPosition(for: task.end, dayWidth: dayWidth) - startX
+        let group = task.group
+        let color = taskViewModel.groups.first(where: { $0.key == group })?.value ?? Color(red: 0.88, green: 0.88, blue: 0.88)
+        
         
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.accentColor)
-            Text(task.title)
-                .lineLimit(1)
-                .padding(.horizontal, 6)
-                .foregroundStyle(.white)
+                .fill(color)
+                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 2)
+            VStack(alignment: .leading){
+                Text(task.title)
+                    .font(.system(size: 13).weight(.bold))
+                    .lineLimit(1)
+                    .foregroundStyle(color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
+                Text("\(formattedDateRange(start: task.start, end: task.end))")
+                    .font(.system(size: 9))
+                    .foregroundStyle(color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+
                 
         }
         .frame(width: width, height: 45)
         .offset(x: startX)
-        .gesture (
-            DragGesture(minimumDistance: 0)
-                .onChanged { g in
-                    let localX = g.location.x - startX
-                    isDraggingStart = (localX < 20)
-                    let deltaDays = g.translation.width / dayWidth
-                    let deltaSec = deltaDays * 24 * 3600
-                    if isDraggingStart {
-                        task.start = task.start.addingTimeInterval(deltaSec)
-                    } else {
-                        task.end = task.end.addingTimeInterval(deltaSec)
-                    }
-                }
-                .onEnded { _ in
-                    taskViewModel.update(task)
-                }
-        )
+    }
+}
+
+extension Color {
+    func appropriateTextColor(darkTextColor: Color, lightTextColor: Color) -> Color {
+        let uiColor = UIColor(self)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+        let luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+
+        return luminance > 0.6 ? darkTextColor : lightTextColor
+    }
+}
+
+func formattedDateRange(start: Date, end: Date) -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.locale = Locale.current
+    
+    let calendar = Calendar.current
+    let sameDay = calendar.isDate(start, inSameDayAs: end)
+    
+    if sameDay {
+        dateFormatter.dateFormat = "MMM d, h:mm a"
+        return "\(dateFormatter.string(from: start)) → \(dateFormatter.string(from: end))"
+    } else {
+        let startFormatter = DateFormatter()
+        startFormatter.dateFormat = "MMM d, h:mm a"
+        
+        let endFormatter = DateFormatter()
+        endFormatter.dateFormat = "MMM d, h:mm a"
+        
+        return "\(startFormatter.string(from: start)) → \(endFormatter.string(from: end))"
     }
 }
 
