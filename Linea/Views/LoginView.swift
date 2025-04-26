@@ -2,19 +2,18 @@
 //  LoginView.swift
 //  Linea
 //
-//
-//
 
 import SwiftUI
 import AVKit
-import GoogleSignIn
-
 
 struct LoginView: View {
+    @StateObject private var authViewModel = AuthViewModel()
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.black.ignoresSafeArea()
+                
                 VStack {
                     LoopingVideoPlayer(videoName: "video", videoType: "mov")
                         .frame(
@@ -24,10 +23,10 @@ struct LoginView: View {
                         .position(x: geometry.size.width / 1.95, y: geometry.size.height / 3.7)
                     
                     Text("Linea")
-                    .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.white)
-                    .padding(.bottom, 6)
+                        .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .padding(.bottom, 6)
                     
                     loginCard(logo: "apple.logo", brand: "Apple")
                         .padding(.bottom, 7)
@@ -37,12 +36,14 @@ struct LoginView: View {
                     
                     loginCard(logo: "", brand: "")
                         .padding(.bottom, geometry.size.height / 12)
-                    
                 }
-                
             }
         }
     }
+}
+
+#Preview {
+    LoginView()
 }
 
 struct LoopingVideoPlayer: UIViewRepresentable {
@@ -63,24 +64,24 @@ class LoopingPlayerUIView: UIView {
 
     init(videoName: String, videoType: String) {
         super.init(frame: .zero)
-
+        
         guard let path = Bundle.main.path(forResource: videoName, ofType: videoType) else { return }
         let url = URL(fileURLWithPath: path)
         let asset = AVURLAsset(url: url)
         let item = AVPlayerItem(asset: asset)
         let queuePlayer = AVQueuePlayer()
         self.queuePlayer = queuePlayer
-
+        
         let playerLayer = AVPlayerLayer(player: queuePlayer)
         self.playerLayer = playerLayer
         playerLayer.videoGravity = .resizeAspect
         playerLayer.frame = bounds
         layer.addSublayer(playerLayer)
-
+        
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
-
+        
         queuePlayer.play()
-
+        
         NotificationCenter.default.addObserver(self, selector: #selector(resizeLayer), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
 
@@ -98,17 +99,12 @@ class LoopingPlayerUIView: UIView {
     }
 }
 
-
-#Preview {
-    LoginView()
-}
-
 extension LoginView {
     private func loginCard(logo: String, brand: String) -> some View {
         Group {
             if brand == "Google" {
                 Button(action: {
-                    handleGoogleSignupButton()
+                    authViewModel.signInWithGoogle()
                 }) {
                     cardContent(logo: logo, brand: brand)
                 }
@@ -145,45 +141,4 @@ extension LoginView {
                 .padding(.leading, 5)
         }
     }
-    
-    private func handleGoogleSignupButton() {
-        print("Google Sign-Up Button Pressed")
-        
-        if let rootViewController = getRootViewController() {
-            GIDSignIn.sharedInstance.signIn(
-                withPresenting: rootViewController
-            ) { result, error in
-                guard let result else {
-                    // inspect error
-                    return
-                }
-                // do something with result
-                print(result.user.profile?.name)
-                print(result.user.profile?.email)
-            }
-        }
-    
-    }
-}
-
-
-func getRootViewController() -> UIViewController? {
-    guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-          let rootViewConroller = scene.windows.first?.rootViewController else {
-        return nil
-    }
-    return getVisibleViewController(from: rootViewConroller)
-}
-
-private func getVisibleViewController(from vc: UIViewController) -> UIViewController {
-    if let nav = vc as? UINavigationController {
-        return getVisibleViewController(from: nav.visibleViewController!)
-    }
-    if let tab = vc as? UITabBarController {
-        return getVisibleViewController(from: tab.selectedViewController!)
-    }
-    if let presented = vc.presentedViewController {
-        return getVisibleViewController(from: presented)
-    }
-    return vc
 }
