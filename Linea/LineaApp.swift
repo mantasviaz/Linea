@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import GoogleSignIn
 
 @main
 struct LineaApp: App {
@@ -12,8 +13,10 @@ struct LineaApp: App {
     var body: some Scene {
         WindowGroup {
             //TODO: Change
-            HomeScreenView()
-                .environment(taskViewModel)
+            LoginView()
+                .onOpenURL {
+                    url in GIDSignIn.sharedInstance.handle(url)
+            }
         }
     }
 }

@@ -2,18 +2,18 @@
 //  LoginView.swift
 //  Linea
 //
-//
-//
 
 import SwiftUI
 import AVKit
 
-
 struct LoginView: View {
+    @StateObject private var authViewModel = AuthViewModel()
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.black.ignoresSafeArea()
+                
                 VStack {
                     LoopingVideoPlayer(videoName: "video", videoType: "mov")
                         .frame(
@@ -23,10 +23,10 @@ struct LoginView: View {
                         .position(x: geometry.size.width / 1.95, y: geometry.size.height / 3.7)
                     
                     Text("Linea")
-                    .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.white)
-                    .padding(.bottom, 6)
+                        .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .padding(.bottom, 6)
                     
                     loginCard(logo: "apple.logo", brand: "Apple")
                         .padding(.bottom, 7)
@@ -36,12 +36,14 @@ struct LoginView: View {
                     
                     loginCard(logo: "", brand: "")
                         .padding(.bottom, geometry.size.height / 12)
-                    
                 }
-                
             }
         }
     }
+}
+
+#Preview {
+    LoginView()
 }
 
 struct LoopingVideoPlayer: UIViewRepresentable {
@@ -62,24 +64,24 @@ class LoopingPlayerUIView: UIView {
 
     init(videoName: String, videoType: String) {
         super.init(frame: .zero)
-
+        
         guard let path = Bundle.main.path(forResource: videoName, ofType: videoType) else { return }
         let url = URL(fileURLWithPath: path)
         let asset = AVURLAsset(url: url)
         let item = AVPlayerItem(asset: asset)
         let queuePlayer = AVQueuePlayer()
         self.queuePlayer = queuePlayer
-
+        
         let playerLayer = AVPlayerLayer(player: queuePlayer)
         self.playerLayer = playerLayer
         playerLayer.videoGravity = .resizeAspect
         playerLayer.frame = bounds
         layer.addSublayer(playerLayer)
-
+        
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
-
+        
         queuePlayer.play()
-
+        
         NotificationCenter.default.addObserver(self, selector: #selector(resizeLayer), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
 
@@ -97,13 +99,32 @@ class LoopingPlayerUIView: UIView {
     }
 }
 
-
-#Preview {
-    LoginView()
-}
-
 extension LoginView {
     private func loginCard(logo: String, brand: String) -> some View {
+        Group {
+            if brand == "Google" {
+                Button(action: {
+                    authViewModel.signInWithGoogle()
+                }) {
+                    cardContent(logo: logo, brand: brand)
+                }
+            } else {
+                cardContent(logo: logo, brand: brand)
+            }
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 0)
+        .frame(width: 308, height: 54, alignment: .center)
+        .background(!brand.isEmpty ? .white : .black)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .inset(by: 0.5)
+                .stroke(brand.isEmpty ? Color(red: 0.3, green: 0.3, blue: 0.3) : .black, lineWidth: 2)
+        )
+        .cornerRadius(14)
+    }
+    
+    private func cardContent(logo: String, brand: String) -> some View {
         HStack(alignment: .center, spacing: 5) {
             if brand == "Apple" {
                 Image(systemName: logo)
@@ -119,15 +140,5 @@ extension LoginView {
                 .foregroundColor(!brand.isEmpty ? .black : .white)
                 .padding(.leading, 5)
         }
-        .padding(.horizontal, 15)
-        .padding(.vertical, 0)
-        .frame(width: 308, height: 54, alignment: .center)
-        .background(!brand.isEmpty ? .white : .black)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-            .inset(by: 0.5)
-            .stroke(brand.isEmpty ? Color(red: 0.3, green: 0.3, blue: 0.3) : .black, lineWidth: 2)
-        )
-        .cornerRadius(14)
     }
 }
