@@ -815,15 +815,44 @@ struct AddTabView: View {
 }
 
 struct SettingsTabView: View {
+    @StateObject private var authViewModel = AuthViewModel()
+    
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Settings")
-                    .font(.largeTitle)
-                    .foregroundColor(.black)
+        VStack {
+            Spacer()
+
+            Button(action: {
+                authViewModel.signOutFromGoogle()
+                logoutAndResetApp()
+            }) {
+                Text("Log Out")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 17).weight(.semibold))
+                    .background {
+                        Rectangle()
+                            .foregroundColor(.clear)
+                            .frame(width: 213, height: 45)
+                            .background(Color(red: 0, green: 0.48, blue: 1))
+                            .cornerRadius(14)
+                    }
+                    .padding(.top, 8)
             }
-            .navigationTitle("Settings")
+
+            Spacer()
         }
+    }
+    
+    private func logoutAndResetApp() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return
+        }
+
+        window.rootViewController = UIHostingController(
+            rootView: LoginView()
+                .environment(TaskViewModel())
+        )
+        window.makeKeyAndVisible()
     }
 }
 

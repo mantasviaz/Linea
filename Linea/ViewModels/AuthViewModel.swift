@@ -66,6 +66,13 @@ class AuthViewModel: ObservableObject {
         return vc
     }
     
+    func signOutFromGoogle() {
+        GIDSignIn.sharedInstance.signOut()
+        self.user = nil
+        self.isSignedIn = false
+        print("Signed out of Google.")
+    }
+    
     private func fetchPrimaryCalendarEvents(accessToken: String, taskViewModel: TaskViewModel) {
         let formatter = ISO8601DateFormatter()
         let currentDateTime = formatter.string(from: Date())
