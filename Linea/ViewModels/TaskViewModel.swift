@@ -12,9 +12,16 @@ import SwiftData
 class TaskViewModel {
     private let container: ModelContainer
     private var context: ModelContext { container.mainContext }
+    
     var tasks: [LineaTask] = []
     var groups: [String: Color] = [:]
-    var colors: [String: Color] = ["Blue": Color(red: 0.8, green: 0.89, blue: 1), "Red": Color(red: 1, green: 0.76, blue: 0.76), "Orange": Color(red: 1, green: 0.87, blue: 0.65), "Green": Color(red: 0.84, green: 0.95, blue: 0.77), "Purple": Color(red: 0.89, green: 0.84, blue: 0.95)]
+    var colors: [String: Color] = [
+        "Blue": Color(red: 0.8, green: 0.89, blue: 1),
+        "Red": Color(red: 1, green: 0.76, blue: 0.76),
+        "Orange": Color(red: 1, green: 0.87, blue: 0.65),
+        "Green": Color(red: 0.84, green: 0.95, blue: 0.77),
+        "Purple": Color(red: 0.89, green: 0.84, blue: 0.95)
+    ]
     
     init() {
         do {
@@ -61,19 +68,19 @@ class TaskViewModel {
     }
     
     func xPosition(for date: Date, dayWidth: CGFloat) -> CGFloat {
-        let cal          = Calendar.current
-        let wholeDays    = cal.dateComponents([.day], from: windowOrigin, to: date).day!
+        let cal = Calendar.current
+        let wholeDays = cal.dateComponents([.day], from: windowOrigin, to: date).day!
         let midnightThatDay = cal.date(byAdding: .day, value: wholeDays, to: windowOrigin)!
-        let secondsIntoDay  = date.timeIntervalSince(midnightThatDay)
-        let fraction        = secondsIntoDay / (24 * 3_600)
+        let secondsIntoDay = date.timeIntervalSince(midnightThatDay)
+        let fraction = secondsIntoDay / (24 * 3600)
         return (CGFloat(wholeDays) + CGFloat(fraction)) * dayWidth
     }
     
     func update(_ task: LineaTask) {
         if let idx = tasks.firstIndex(where: { $0.id == task.id }) {
-            tasks[idx] = task           // existing task edited
+            tasks[idx] = task // existing task edited
         } else {
-            tasks.append(task)          // new task added
+            tasks.append(task) // new task added
         }
         tasks.sort { $0.end < $1.end }
         context.insert(task)
@@ -90,7 +97,7 @@ class TaskViewModel {
         guard oldName != newName,
               !newName.isEmpty,
               let colour = groups.removeValue(forKey: oldName) else { return }
-
+        
         groups[newName] = colour
         context.insert(GroupColor(name: newName, color: colour))
         try? context.save()
@@ -123,6 +130,12 @@ class TaskViewModel {
         groups[proposed] = color
         context.insert(GroupColor(name: proposed, color: color))
         try? context.save()
+    }
+    
+    @MainActor
+    func fetchAllTasks() -> [LineaTask] {
+        let descriptor = FetchDescriptor<LineaTask>()
+        return (try? context.fetch(descriptor)) ?? []
     }
 }
 

@@ -6,6 +6,7 @@
 import Foundation
 import GoogleSignIn
 import SwiftUI
+import SwiftData
 
 class AuthViewModel: ObservableObject {
     @Published var user: GIDGoogleUser?
@@ -107,39 +108,46 @@ class AuthViewModel: ObservableObject {
                 let calendarResponse = try JSONDecoder().decode(GoogleCalendarEvents.self, from: data)
                 
                 if let items = calendarResponse.items, !items.isEmpty {
-                    let mappedTasks: [LineaTask] = items.compactMap { event in
-                        guard let startDateString = event.start?.dateTime ?? event.start?.date,
-                              let startDate = ISO8601DateFormatter().date(from: startDateString) else {
-                            return nil
-                        }
+                    
+                    Task { @MainActor in
+                        let existingTasks = taskViewModel.fetchAllTasks()
                         
-                        let endDate: Date = {
-                            if let endDateString = event.end?.dateTime ?? event.end?.date,
-                               let parsedEnd = ISO8601DateFormatter().date(from: endDateString) {
-                                return parsedEnd
-                            } else {
-                                return Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
+                        let mappedTasks: [LineaTask] = items.compactMap { event in
+                            guard let startDateString = event.start?.dateTime ?? event.start?.date,
+                                  let startDate = ISO8601DateFormatter().date(from: startDateString) else {
+                                return nil
                             }
-                        }()
+                            
+                            let endDate: Date = {
+                                if let endDateString = event.end?.dateTime ?? event.end?.date,
+                                   let parsedEnd = ISO8601DateFormatter().date(from: endDateString) {
+                                    return parsedEnd
+                                } else {
+                                    return Calendar.current.date(byAdding: .hour, value: 1, to: startDate) ?? startDate
+                                }
+                            }()
+                            
+                            return LineaTask(
+                                group: "Green",
+                                title: event.summary ?? "No Title",
+                                start: startDate,
+                                end: endDate
+                            )
+                        }
                         
-                        return LineaTask(
-                            group: "Green",
-                            title: event.summary ?? "No Title",
-                            start: startDate,
-                            end: endDate
-                        )
-                    }
-                    
-                    print("Mapped Tasks:")
-                    for task in mappedTasks {
-                        print("- \(task.title) | \(task.start) → \(task.end)")
-                    }
-                    
-                    for task in mappedTasks {
-                        Task { @MainActor in
-                            taskViewModel.update(task)
+                        for newTask in mappedTasks {
+                            let isDuplicate = existingTasks.contains(where: { existingTask in
+                                existingTask.title == newTask.title &&
+                                existingTask.start == newTask.start &&
+                                existingTask.end == newTask.end
+                            })
+                            
+                            if !isDuplicate {
+                                taskViewModel.update(newTask)
+                            }
                         }
                     }
+                    
                 } else {
                     print("User has no events in primary calendar.")
                 }
@@ -149,3 +157,4 @@ class AuthViewModel: ObservableObject {
         }.resume()
     }
 }
+
