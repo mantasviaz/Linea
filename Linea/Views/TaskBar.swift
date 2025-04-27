@@ -82,6 +82,27 @@ func formattedDateRange(start: Date, end: Date) -> String {
     }
 }
 
+func formattedBiggerDateRange(start: Date, end: Date) -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.locale = Locale.current
+    
+    let calendar = Calendar.current
+    let sameDay = calendar.isDate(start, inSameDayAs: end)
+    
+    if sameDay {
+        dateFormatter.dateFormat = "MMM d, h:mm a"
+        return "\(dateFormatter.string(from: start)) \n→ \(dateFormatter.string(from: end))"
+    } else {
+        let startFormatter = DateFormatter()
+        startFormatter.dateFormat = "MMM d, h:mm a"
+        
+        let endFormatter = DateFormatter()
+        endFormatter.dateFormat = "MMM d, h:mm a"
+        
+        return "\(startFormatter.string(from: start)) \n→ \(endFormatter.string(from: end))"
+    }
+}
+
 //#Preview {
 //    TaskBar()
 //}

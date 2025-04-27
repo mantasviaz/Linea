@@ -5,18 +5,48 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
+@MainActor
 @Observable
 class TaskViewModel {
-    var tasks: [Task] = Task.samples.sorted { $0.end < $1.end }
+    private let container: ModelContainer
+    private var context: ModelContext { container.mainContext }
+    var tasks: [Task] = []
     var groups: [String: Color] = [:]
     var colors: [String: Color] = ["Blue": Color(red: 0.8, green: 0.89, blue: 1), "Red": Color(red: 1, green: 0.76, blue: 0.76), "Orange": Color(red: 1, green: 0.87, blue: 0.65), "Green": Color(red: 0.84, green: 0.95, blue: 0.77), "Purple": Color(red: 0.89, green: 0.84, blue: 0.95)]
     
-    //TODO: Delete later
     init() {
-        self.groups = [
-            "Blue": colors["Blue"]!, "Red": colors["Red"]!, "Orange": colors["Orange"]!, "Green": colors["Green"]!, "Purple": colors["Purple"]!
-        ]
+        do {
+            container = try ModelContainer(for: Task.self, GroupColor.self)
+        } catch {
+            fatalError("Failed to create SwiftData container: \(error)")
+        }
+
+        let taskDescriptor = FetchDescriptor<Task>()
+        tasks = (try? context.fetch(taskDescriptor)) ?? []
+
+        var loadedGroups: [String: Color] = [:]
+        let groupDescriptor = FetchDescriptor<GroupColor>()
+        let storedColours = (try? context.fetch(groupDescriptor)) ?? []
+        for g in storedColours {
+            loadedGroups[g.name] = g.swiftUIColor
+        }
+        self.groups = loadedGroups
+
+        if groups.isEmpty {
+            self.groups = [
+                "Blue": colors["Blue"]!,
+                "Red": colors["Red"]!,
+                "Orange": colors["Orange"]!,
+                "Green": colors["Green"]!,
+                "Purple": colors["Purple"]!
+            ]
+            for (name, colour) in groups {
+                context.insert(GroupColor(name: name, color: colour))
+            }
+            try? context.save()
+        }
     }
     
     var windowOrigin: Date {
@@ -46,10 +76,53 @@ class TaskViewModel {
             tasks.append(task)          // new task added
         }
         tasks.sort { $0.end < $1.end }
+        context.insert(task)
+        try? context.save()
+    }
+
+    func delete(_ task: Task) {
+        tasks.removeAll { $0.id == task.id }
+        context.delete(task)
+        try? context.save()
+    }
+    
+    func renameGroup(oldName: String, newName: String) {
+        guard oldName != newName,
+              !newName.isEmpty,
+              let colour = groups.removeValue(forKey: oldName) else { return }
+
+        groups[newName] = colour
+        context.insert(GroupColor(name: newName, color: colour))
+        try? context.save()
+    }
+
+    func updateGroupColor(name: String, color: Color) {
+        groups[name] = color
+        context.insert(GroupColor(name: name, color: color))
+        try? context.save()
+    }
+
+    func deleteGroup(name: String) {
+        groups.removeValue(forKey: name)
+        for model in (try? context.fetch(FetchDescriptor<GroupColor>())) ?? [] where model.name == name {
+            context.delete(model)
+        }
+        try? context.save()
     }
     
     func addGroup(name: String, color: Color) {
-        groups[name] = color
+        var proposed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if proposed.isEmpty { proposed = "Group" }
+
+        if groups.keys.contains(proposed) {
+            var idx = 1
+            while groups.keys.contains("\(proposed) \(idx)") { idx += 1 }
+            proposed = "\(proposed) \(idx)"
+        }
+
+        groups[proposed] = color
+        context.insert(GroupColor(name: proposed, color: color))
+        try? context.save()
     }
 }
 
@@ -112,7 +185,3 @@ extension Task {
         ]
     }()
 }
-
-
-
-

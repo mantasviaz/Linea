@@ -11,6 +11,10 @@ extension Notification.Name {
     static let homeTabSelected = Notification.Name("homeTabSelected")
 }
 
+extension Notification.Name {
+    static let commitGroupNames = Notification.Name("commitGroupNames")
+}
+
 private struct ScrollXKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
@@ -40,6 +44,9 @@ struct TimelineScrollView: View {
     @Binding var scrollX: CGFloat
     @State private var didInitialScroll = false
     @Environment(TaskViewModel.self) var taskViewModel
+    @Binding var selectedTask: Task?
+    @Binding var showTaskDetailSheet: Bool
+    @Binding var showAddSheet: Bool
 
     var body: some View {
         ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -66,9 +73,18 @@ struct TimelineScrollView: View {
                     VStack(alignment: .leading, spacing: 9) {
                         ForEach(taskViewModel.tasks, id: \.id) { task in
                             TaskBar(task: Binding(
-                                get: { taskViewModel.tasks.first(where: { $0.id == task.id })! },
+                                get: {
+                                    taskViewModel.tasks.first(where: { $0.id == task.id }) ?? task
+                                },
                                 set: { taskViewModel.update($0) }
                             ), dayWidth: dayWidth)
+                            .onTapGesture {
+                                withAnimation(.interactiveSpring) {
+                                    selectedTask = task
+                                    showTaskDetailSheet = true
+                                    showAddSheet = false
+                                }
+                            }
                         }
                     }
                     .padding(.top, 15)
@@ -84,7 +100,8 @@ struct TimelineScrollView: View {
                     ),
                     alignment: .topLeading
                 )
-                .frame(minHeight: 250)
+                // keep the content pinned to the top and let it only shrink upward
+                .frame(minHeight: geoSize.size.height, alignment: .top)
                 .onAppear {
                     if !didInitialScroll {
                         DispatchQueue.main.async {
@@ -288,7 +305,8 @@ struct BottomSheet<Content: View>: View {
 }
 
 struct TodayFocusView: View {
-    let tasks: [Task]
+    @Environment(TaskViewModel.self) private var taskViewModel
+    var onTap: (Task) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -296,9 +314,13 @@ struct TodayFocusView: View {
                 .font(.system(size: 21).weight(.bold))
                 .padding(.top, -10)
             let now = Date()
-            ForEach(tasks.filter { $0.end >= now }) { task in
+            ForEach(taskViewModel.tasks.filter { $0.end >= now }) { task in
                 FocusTask(task: task)
-                Rectangle().fill(Color(red: 0.88, green: 0.88, blue: 0.88)).frame(height: 1)
+                    .id(task.group)
+                    .onTapGesture { onTap(task) }
+                Rectangle()
+                    .fill(Color(red: 0.88, green: 0.88, blue: 0.88))
+                    .frame(height: 1)
                     .padding(.horizontal, 14)
             }
         }
@@ -360,8 +382,11 @@ struct CustomTabBarController: UIViewControllerRepresentable {
 }
 
 struct HomeTabView: View {
+    @State private var editingTask: Task? = nil
     @State private var scrollX: CGFloat = 0
     @State private var isSheetExpanded = false
+    @State private var selectedTask: Task? = nil
+    @State private var showTaskDetailSheet = false
     @State private var sheetDragOffset: CGFloat = 0
     @State private var sheetPosition: Int = 1  // 0 = small, 1 = medium (start), 2 = expanded
     @Environment(TaskViewModel.self) var taskViewModel
@@ -375,7 +400,7 @@ struct HomeTabView: View {
                 let dayWidth = geo.size.width / 7.123
                 VStack(spacing: 0) {
                     Rectangle().fill(Color.gray.opacity(0.4)).frame(height: 1)
-                    TimelineScrollView(dayWidth: dayWidth, geoSize: geo, scrollX: $scrollX)
+                    TimelineScrollView(dayWidth: dayWidth, geoSize: geo, scrollX: $scrollX, selectedTask: $selectedTask, showTaskDetailSheet: $showTaskDetailSheet, showAddSheet: $showAddSheet)
                         .frame(height: geo.size.height / 1.1)
                         .overlay(alignment: .topLeading) {
                             ZStack(alignment: .topLeading) {
@@ -401,8 +426,10 @@ struct HomeTabView: View {
                 }() + sheetDragOffset
 
                 Button(action: {
-                    withAnimation {
+                    withAnimation(.interactiveSpring) {
+                        editingTask = nil
                         showAddSheet = true
+                        showTaskDetailSheet = false
                     }
                 }) {
                     Rectangle()
@@ -430,7 +457,12 @@ struct HomeTabView: View {
                 
 
                 BottomSheet(isExpanded: $isSheetExpanded, translation: $sheetDragOffset, collapsedY: collapsedY) {
-                    TodayFocusView(tasks: taskViewModel.tasks)
+                    TodayFocusView(onTap: { task in
+                        withAnimation(.interactiveSpring) {
+                            selectedTask = task
+                            showTaskDetailSheet = true
+                        }
+                    })
                 }
                 .frame(width: geo.size.width, height: fullHeight, alignment: .top)
                 .ignoresSafeArea(edges: [.horizontal, .bottom])
@@ -459,19 +491,34 @@ struct HomeTabView: View {
                             }
                         }
                 )
-
+                //MARKK:
+                if let task = selectedTask, showTaskDetailSheet {
+                    BottomSheet(isExpanded: .constant(true),
+                                translation: $addSheetDragOffset,
+                                collapsedY: collapsedY,
+                                showHandle: false) {
+                        TaskDetailView(task: task, showTaskDetailSheet: $showTaskDetailSheet, showAddSheet: $showAddSheet, editingTask: $editingTask)
+                    }
+                    .frame(width: geo.size.width, height: fullHeight, alignment: .top)
+                    .ignoresSafeArea(edges: [.horizontal, .bottom])
+                    .offset(y: collapsedY)
+                    .transition(.move(edge: .bottom))
+                    .zIndex(6)
+                }
+                
                 if showAddSheet {
                     BottomSheet(isExpanded: .constant(true),
                                 translation: $addSheetDragOffset,
                                 collapsedY: collapsedY,
                                 showHandle: false) {
-                        AddTab(showAddSheet: $showAddSheet, showNewGroupSheet: $showNewGroupSheet)
+                        AddTab(showAddSheet: $showAddSheet, showNewGroupSheet: $showNewGroupSheet, editingTask: editingTask)
                     }
                     .frame(width: geo.size.width, height: fullHeight, alignment: .top)
                     .ignoresSafeArea(edges: [.horizontal, .bottom])
                     .offset(y: collapsedY + addSheetDragOffset - 35)
                     .transition(.move(edge: .bottom))
                     .zIndex(4)
+                    .allowsHitTesting(!showNewGroupSheet)
                 }
                 if showNewGroupSheet {
                     BottomSheet(isExpanded: .constant(true),
@@ -494,15 +541,52 @@ struct HomeTabView: View {
 struct AddTab: View {
     @Binding var showAddSheet: Bool
     @Binding var showNewGroupSheet: Bool
-    @State var selectedGroup: String = ""
+    var editingTask: Task?
+    @State var selectedGroup: String
 
-    @State private var title = ""
-    @State private var location = ""
-    @State private var startDate = Calendar.current.startOfDay(for: Date())
-    @State private var endDate = Calendar.current.date(bySettingHour: 23, minute: 59, second: 0, of: Date())!
-    @State private var showStartTimePicker = false
-    @State private var showEndTimePicker = false
+    @State private var title: String
+    @State private var location: String
+    @State private var startDate: Date
+    @State private var endDate: Date
+    @State private var showStartTimePicker: Bool
+    @State private var showEndTimePicker: Bool
     @State private var group = ""
+    
+    init(showAddSheet: Binding<Bool>,
+         showNewGroupSheet: Binding<Bool>,
+         editingTask: Task?) {
+        self._showAddSheet = showAddSheet
+        self._showNewGroupSheet = showNewGroupSheet
+        self.editingTask = editingTask
+
+        if let t = editingTask {
+            _title         = State(initialValue: t.title)
+            _location      = State(initialValue: "")
+            _selectedGroup = State(initialValue: t.group)
+            _startDate     = State(initialValue: t.start)
+            _endDate       = State(initialValue: t.end)
+            // determine whether the task already has explicit times
+            let cal = Calendar.current
+            let startCmp = cal.dateComponents([.hour, .minute, .second], from: t.start)
+            let endCmp   = cal.dateComponents([.hour, .minute, .second], from: t.end)
+            let hasStartTime = (startCmp.hour ?? 0) != 0 || (startCmp.minute ?? 0) != 0 || (startCmp.second ?? 0) != 0
+            // default “no‑time” end is 23:59 → treat any other end‑time as explicit
+            let hasEndTime = !((endCmp.hour ?? 23) == 23 && (endCmp.minute ?? 59) == 59)
+            _showStartTimePicker = State(initialValue: hasStartTime)
+            _showEndTimePicker   = State(initialValue: hasEndTime)
+        } else {
+            _title         = State(initialValue: "")
+            _location      = State(initialValue: "")
+            _selectedGroup = State(initialValue: "")
+            _startDate     = State(initialValue: Calendar.current.startOfDay(for: Date()))
+            _endDate       = State(initialValue: Calendar.current.date(bySettingHour: 23,
+                                                                       minute: 59,
+                                                                       second: 0,
+                                                                       of: Date())!)
+            _showStartTimePicker = State(initialValue: false)
+            _showEndTimePicker   = State(initialValue: false)
+        }
+    }
 
 
     private func resetFields() {
@@ -521,7 +605,7 @@ struct AddTab: View {
         VStack(alignment: .leading) {
             HStack{
                 Button(action: {
-                    withAnimation{showAddSheet.toggle()}
+                    withAnimation(.interactiveSpring) {showAddSheet.toggle()}
                     resetFields()
                 }) {
                     Text("Cancel")
@@ -531,18 +615,26 @@ struct AddTab: View {
                 }
                 Spacer()
                 Button(action: {
-                    let newTask = Task(
-                        id: UUID(),
-                        group: selectedGroup,
-                        title: title,
-                        start: startDate,
-                        end: endDate
-                    )
-                    taskViewModel.update(newTask)
-                    withAnimation{showAddSheet.toggle()}
+                    if let original = editingTask {
+                        let updated = Task(id: original.id,
+                                           group: selectedGroup,
+                                           title: title,
+                                           start: startDate,
+                                           end: endDate)
+                        taskViewModel.update(updated)
+                    } else {
+                        let newTask = Task(id: UUID(),
+                                           group: selectedGroup,
+                                           title: title,
+                                           start: startDate,
+                                           end: endDate)
+                        taskViewModel.update(newTask)
+                    }
+                    withAnimation(.interactiveSpring) { showAddSheet.toggle()
                     resetFields()
+                    }
                 }) {
-                    Text("Add")
+                    Text(editingTask == nil ? "Add" : "Update")
                         .font(.system(size: 17).weight(.bold))
                         .padding(.trailing, -11)
                         .padding(.top, 15)
@@ -565,11 +657,13 @@ struct AddTab: View {
                     Button(action: {
                         showNewGroupSheet = true
                     }) {
-                        Text("+")
+                        Text("Edit")
                             .padding(.bottom, 2)
                             .foregroundStyle(Color.black)
-                            .font(.system(size: 22).weight(.bold))
-                            .frame(width: 34, height: 34)
+                            .font(.system(size: 17))
+                            .fontWeight(.semibold)
+                            .frame(width: 60, height: 34)
+                            
                             .background(
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(Color.gray)
@@ -683,6 +777,7 @@ struct GroupTab: View {
         let verifiedSelectedColor = color.appropriateTextColor(darkTextColor: Color.black, lightTextColor: Color.white)
         Text(group)
             .foregroundStyle(isSelected ? verifiedSelectedColor : verifiedColor)
+            .font(.system(size: 17))
             .fontWeight(isSelected ? .bold : .regular)
             .padding(.horizontal, 12)
             .frame(minWidth: 80)
@@ -766,6 +861,7 @@ struct FocusTask: View {
                 }
             }
         }
+        .id(task.group)
         .padding(.horizontal, 8)
         .padding(.bottom, -6)
         .padding(.top, -6)
@@ -804,29 +900,263 @@ extension Color {
 }
 
 
+
+/// Single editable row inside the *New Group* sheet.
+private struct GroupRowView: View {
+    @Environment(TaskViewModel.self) private var vm
+    /// The key when this row was created – used to rename later.
+    @State private var originalName: String
+    /// Live‑editable text shown in the field.
+    @State private var name: String
+    /// Current color swatch for the row.
+    var color: Color
+    /// Callbacks provided by the parent view.
+    var oncolorTap: () -> Void
+    var onDelete: () -> Void
+
+    init(name: String,
+         color: Color,
+         oncolorTap: @escaping () -> Void,
+         onDelete: @escaping () -> Void) {
+        _originalName = State(initialValue: name)
+        _name             = State(initialValue: name)
+        self.color       = color
+        self.oncolorTap  = oncolorTap
+        self.onDelete     = onDelete
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            TextField("Group Name", text: $name)
+                .textFieldStyle(.roundedBorder)
+
+            Rectangle()
+                .fill(color)
+                .frame(width: 24, height: 24)
+                .cornerRadius(4)
+                .onTapGesture(perform: oncolorTap)
+
+            Button(action: onDelete) {
+                Image(systemName: "minus.circle.fill")
+                    .foregroundColor(.red)
+                    .font(.system(size: 20))
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .commitGroupNames)) { _ in
+            vm.renameGroup(oldName: originalName, newName: name)
+            originalName = name
+        }
+    }
+}
+
 struct NewGroupView: View {
     @Binding var showNewGroupSheet: Bool
-    @State private var groupName = ""
-    @State private var groupColor = Color.blue
+
+    @State private var showColorPicker = false
+    @State private var selectedGroupKey = ""
+    @State private var tempColor = Color.gray
+
     @Environment(TaskViewModel.self) private var taskViewModel
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
+
             HStack {
-                Button("Cancel") {
-                    showNewGroupSheet = false
+                Button("Done") {
+                    // Dismiss keyboard to trigger onCommit in text fields
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                    to: nil, from: nil, for: nil)
+                    NotificationCenter.default.post(name: .commitGroupNames, object: nil)
+                    withAnimation(.interactiveSpring) { showNewGroupSheet = false }
+                }
+                .font(.system(size: 17).weight(.bold))
+
+                Spacer()
+            }
+            .padding(.top, 15)
+
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(spacing: 8) {
+                    ForEach(Array(taskViewModel.groups).sorted(by: { $0.key < $1.key }), id: \.key) { key, color in
+                        GroupRowView(
+                            name: key,
+                            color: color,
+                            oncolorTap: {
+                                selectedGroupKey = key
+                                tempColor = color
+                                showColorPicker = true
+                            },
+                            onDelete: {
+                                taskViewModel.deleteGroup(name: key)
+                            }
+                        )
+                    }
+
+                    // add‑group row
+                    Button {
+                        taskViewModel.addGroup(name: "", color: .gray)
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Group")
+                        }
+                        .font(.system(size: 17).weight(.semibold))
+                    }
+                    .padding(.top, 12)
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+        .padding(.horizontal, 11)
+        .frame(maxHeight: .infinity)
+        .layoutPriority(1)
+        // color‑picker sheet
+        .sheet(isPresented: $showColorPicker) {
+            VStack(spacing: 16) {
+                ColorPicker("Custom Color",
+                            selection: $tempColor,
+                            supportsOpacity: false)
+                    .onChange(of: tempColor) { newcolor in
+                        taskViewModel.updateGroupColor(name: selectedGroupKey,
+                                                       color: newcolor)
+                    }
+
+                Text("Preset Colors")
+                    .font(.headline)
+
+                // preset swatches
+                HStack {
+                    ForEach(Array(taskViewModel.colors.values), id: \.self) { color in
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: 24, height: 24)
+                            .cornerRadius(4)
+                            .onTapGesture {
+                                tempColor = color
+                                taskViewModel.updateGroupColor(name: selectedGroupKey,
+                                                               color: color)
+                                showColorPicker = false
+                            }
+                    }
                 }
                 Spacer()
-                Button("Add") {
-                    taskViewModel.addGroup(name: groupName, color: groupColor)
-                    showNewGroupSheet = false
-                }
             }
-            TextField("Group Name", text: $groupName)
-                .textFieldStyle(.roundedBorder)
-            ColorPicker("Group Color", selection: $groupColor)
-            Spacer()
+            .padding()
         }
-        .padding()
+    }
+}
+
+struct TaskDetailView: View {
+    var task: Task
+    @Binding var showTaskDetailSheet: Bool
+    @Binding var showAddSheet: Bool
+    @Binding var editingTask: Task?
+    @Environment(TaskViewModel.self) private var taskViewModel
+
+    var body: some View {
+        let now = Date()
+        let interval = task.end.timeIntervalSince(now)
+        VStack(spacing: 16) {
+            HStack{
+                Image("close")
+                    .padding(.leading, -11)
+                    .padding(.top, 15)
+                    .onTapGesture {
+                        withAnimation(.interactiveSpring)
+                        {showTaskDetailSheet.toggle()}
+                    }
+            
+                Spacer()
+                
+                Image(systemName: "pencil")
+                    .font(.system(size: 20).weight(.bold))
+                    .foregroundStyle(Color(red: 0.37, green: 0.37, blue: 0.3).opacity(1.0))
+                    .onTapGesture{
+                        withAnimation(.interactiveSpring) {
+                            editingTask = task
+                            showTaskDetailSheet.toggle()
+                            showAddSheet.toggle()
+                        }
+                    }
+                    .padding(.top, 17)
+                    .padding(.trailing, 25)
+                
+                Image(systemName: "trash")
+                    .font(.system(size: 18).weight(.bold))
+                    .foregroundStyle(Color.red)
+                    .fontWeight(.bold)
+                    .onTapGesture {
+                        withAnimation(.interactiveSpring) {
+                            taskViewModel.delete(task)
+                            showTaskDetailSheet = false
+                        }
+                    }
+                    .padding(.leading, -11)
+                    .padding(.top, 15)
+            }
+            
+
+            
+            
+            HStack {
+                Capsule()
+                    .frame(width: 8, height: 90)
+                    .foregroundColor(taskViewModel.groups[task.group]?.darkerCustom())
+                    .padding(.top, 10)
+                VStack(alignment: .leading){
+                    Text(task.title)
+                        .font(.system(size: 28).weight(.bold))
+                        .lineLimit(1)
+                        .padding(.bottom, -2)
+                    HStack{
+                        Text("\(formattedBiggerDateRange(start: task.start, end: task.end))")
+                            .font(.system(size: 17))
+                        Group {
+                            if Calendar.current.isDate(task.end, inSameDayAs: now) {
+                                Text("Due Today")
+                                    .font(.system(size: 17).weight(.semibold))
+                                    .lineLimit(1)
+                                    .padding(.top, 20.8)
+                                    .foregroundColor(Color(red: 0.95, green: 0.29, blue: 0.25))
+                            } else if Calendar.current.isDate(task.end, inSameDayAs: Calendar.current.date(byAdding: .day, value: 1, to: now)!) {
+                                Text("Due Tomorrow")
+                                    .font(.system(size: 17).weight(.semibold))
+                                    .lineLimit(1)
+                                    .foregroundColor(Color(red: 1, green: 0.58, blue: 0))
+                                    .padding(.top, 20.8)
+                            }
+                        }
+                    }
+
+                }
+                .padding(.bottom, 15)
+                .padding(.top, 25)
+
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                
+            }
+            .padding(.top, -10)
+            
+            
+            Text("Mark as Completed")
+                .foregroundStyle(.white)
+                .font(.system(size: 17).weight(.semibold))
+                .background(){
+                    Rectangle()
+                      .foregroundColor(.clear)
+                      .frame(width: 213, height: 45)
+                      .background(Color(red: 0, green: 0.48, blue: 1))
+                      .cornerRadius(14)
+                }
+                .padding(.top, 8)
+
+            
+            
+
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 11)
+        .padding(.trailing, 11)
     }
 }
