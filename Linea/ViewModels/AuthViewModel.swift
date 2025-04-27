@@ -11,9 +11,9 @@ class AuthViewModel: ObservableObject {
     @Published var user: GIDGoogleUser?
     @Published var isSignedIn: Bool = false
 
-    func signInWithGoogle(onSuccess: @escaping () -> Void) {
+    func signInWithGoogle(taskViewModel: TaskViewModel, onSuccess: @escaping () -> Void) {
         guard let rootViewController = getRootViewController() else { return }
-
+        
         let config = GIDConfiguration(clientID: "1098134127602-j6h2gv82q3akt1kigpq5h0kb67ibd4hu.apps.googleusercontent.com")
         GIDSignIn.sharedInstance.configuration = config
         
@@ -38,7 +38,7 @@ class AuthViewModel: ObservableObject {
             print("Email: \(result.user.profile?.email ?? "No Email")")
             
             let accessToken = result.user.accessToken.tokenString
-            self.fetchPrimaryCalendarEvents(accessToken: accessToken)
+            self.fetchPrimaryCalendarEvents(accessToken: accessToken, taskViewModel: taskViewModel)
             
             onSuccess()
         }
@@ -65,7 +65,7 @@ class AuthViewModel: ObservableObject {
         return vc
     }
     
-    private func fetchPrimaryCalendarEvents(accessToken: String) {
+    private func fetchPrimaryCalendarEvents(accessToken: String, taskViewModel: TaskViewModel) {
         let formatter = ISO8601DateFormatter()
         let currentDateTime = formatter.string(from: Date())
         
@@ -73,7 +73,7 @@ class AuthViewModel: ObservableObject {
             print("Invalid URL")
             return
         }
-
+        
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         
@@ -88,22 +88,17 @@ class AuthViewModel: ObservableObject {
                 return
             }
             
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("Raw Primary Calendar Events JSON: \(jsonString)")
-            }
-            
             do {
-                //Decoder for Google's event format
                 struct GoogleCalendarEvents: Codable {
                     let items: [GoogleEvent]?
                 }
-
+                
                 struct GoogleEvent: Codable {
                     let summary: String?
                     let start: EventDateTime?
                     let end: EventDateTime?
                 }
-
+                
                 struct EventDateTime: Codable {
                     let date: String?
                     let dateTime: String?
@@ -112,8 +107,6 @@ class AuthViewModel: ObservableObject {
                 let calendarResponse = try JSONDecoder().decode(GoogleCalendarEvents.self, from: data)
                 
                 if let items = calendarResponse.items, !items.isEmpty {
-                    print("Fetched \(items.count) events from primary calendar.")
-                    
                     let mappedTasks: [LineaTask] = items.compactMap { event in
                         guard let startDateString = event.start?.dateTime ?? event.start?.date,
                               let startDate = ISO8601DateFormatter().date(from: startDateString) else {
@@ -130,7 +123,7 @@ class AuthViewModel: ObservableObject {
                         }()
                         
                         return LineaTask(
-                            group: "Blue", // Default group color, could change this
+                            group: "Green",
                             title: event.summary ?? "No Title",
                             start: startDate,
                             end: endDate
@@ -142,8 +135,11 @@ class AuthViewModel: ObservableObject {
                         print("- \(task.title) | \(task.start) → \(task.end)")
                     }
                     
-                    // TODO: Insert mappedTasks into TaskViewModel
-
+                    for task in mappedTasks {
+                        Task { @MainActor in
+                            taskViewModel.update(task)
+                        }
+                    }
                 } else {
                     print("User has no events in primary calendar.")
                 }

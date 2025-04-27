@@ -10,7 +10,7 @@ struct LoginView: View {
     @StateObject private var authViewModel = AuthViewModel()
     @State private var navigateToHome = false
     @Environment(TaskViewModel.self) var taskViewModel
-
+    
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
@@ -62,11 +62,11 @@ struct LoginView: View {
 struct LoopingVideoPlayer: UIViewRepresentable {
     var videoName: String
     var videoType: String
-
+    
     func makeUIView(context: Context) -> UIView {
         return LoopingPlayerUIView(videoName: videoName, videoType: videoType)
     }
-
+    
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
 
@@ -74,7 +74,7 @@ class LoopingPlayerUIView: UIView {
     private var playerLooper: AVPlayerLooper?
     private var queuePlayer: AVQueuePlayer?
     private var playerLayer: AVPlayerLayer?
-
+    
     init(videoName: String, videoType: String) {
         super.init(frame: .zero)
         
@@ -92,20 +92,19 @@ class LoopingPlayerUIView: UIView {
         layer.addSublayer(playerLayer)
         
         playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
-        
         queuePlayer.play()
         
         NotificationCenter.default.addObserver(self, selector: #selector(resizeLayer), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     @objc private func resizeLayer() {
         playerLayer?.frame = self.bounds
     }
-
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         playerLayer?.frame = self.bounds
@@ -117,7 +116,7 @@ extension LoginView {
         Group {
             if brand == "Google" {
                 Button(action: {
-                    authViewModel.signInWithGoogle {
+                    authViewModel.signInWithGoogle(taskViewModel: taskViewModel) {
                         navigateToHome = true
                     }
                 }) {
