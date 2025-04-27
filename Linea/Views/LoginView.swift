@@ -8,34 +8,47 @@ import AVKit
 
 struct LoginView: View {
     @StateObject private var authViewModel = AuthViewModel()
+    @State private var navigateToHome = false
+    @Environment(TaskViewModel.self) var taskViewModel
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                VStack {
-                    LoopingVideoPlayer(videoName: "video", videoType: "mov")
-                        .frame(
-                            width: geometry.size.width * 1.15,
-                            height: geometry.size.height * 0.75
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    Color.black.ignoresSafeArea()
+                    
+                    VStack {
+                        LoopingVideoPlayer(videoName: "video", videoType: "mov")
+                            .frame(
+                                width: geometry.size.width * 1.15,
+                                height: geometry.size.height * 0.75
+                            )
+                            .position(x: geometry.size.width / 1.95, y: geometry.size.height / 3.7)
+                        
+                        Text("Linea")
+                            .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .padding(.bottom, 6)
+                        
+                        loginCard(logo: "apple.logo", brand: "Apple")
+                            .padding(.bottom, 7)
+                        
+                        loginCard(logo: "googleLogo", brand: "Google")
+                            .padding(.bottom, 7)
+                        
+                        loginCard(logo: "", brand: "")
+                            .padding(.bottom, geometry.size.height / 12)
+                        
+                        NavigationLink(
+                            "",
+                            destination: HomeScreenView()
+                                .environment(taskViewModel)
+                                .navigationBarBackButtonHidden(true),
+                            isActive: $navigateToHome
                         )
-                        .position(x: geometry.size.width / 1.95, y: geometry.size.height / 3.7)
-                    
-                    Text("Linea")
-                        .font(Font.custom("PlaywriteUSModern-Regular", size: 48))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .padding(.bottom, 6)
-                    
-                    loginCard(logo: "apple.logo", brand: "Apple")
-                        .padding(.bottom, 7)
-                    
-                    loginCard(logo: "googleLogo", brand: "Google")
-                        .padding(.bottom, 7)
-                    
-                    loginCard(logo: "", brand: "")
-                        .padding(.bottom, geometry.size.height / 12)
+                        .hidden()
+                    }
                 }
             }
         }
@@ -104,7 +117,15 @@ extension LoginView {
         Group {
             if brand == "Google" {
                 Button(action: {
-                    authViewModel.signInWithGoogle()
+                    authViewModel.signInWithGoogle {
+                        navigateToHome = true
+                    }
+                }) {
+                    cardContent(logo: logo, brand: brand)
+                }
+            } else if brand.isEmpty {
+                Button(action: {
+                    navigateToHome = true
                 }) {
                     cardContent(logo: logo, brand: brand)
                 }

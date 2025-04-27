@@ -11,7 +11,7 @@ class AuthViewModel: ObservableObject {
     @Published var user: GIDGoogleUser?
     @Published var isSignedIn: Bool = false
 
-    func signInWithGoogle() {
+    func signInWithGoogle(onSuccess: @escaping () -> Void) {
         guard let rootViewController = getRootViewController() else { return }
 
         let config = GIDConfiguration(clientID: "1098134127602-j6h2gv82q3akt1kigpq5h0kb67ibd4hu.apps.googleusercontent.com")
@@ -39,6 +39,8 @@ class AuthViewModel: ObservableObject {
             
             let accessToken = result.user.accessToken.tokenString
             self.fetchPrimaryCalendarEvents(accessToken: accessToken)
+            
+            onSuccess()
         }
     }
     
@@ -151,4 +153,3 @@ class AuthViewModel: ObservableObject {
         }.resume()
     }
 }
-

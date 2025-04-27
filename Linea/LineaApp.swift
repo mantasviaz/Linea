@@ -12,11 +12,13 @@ struct LineaApp: App {
 
     var body: some Scene {
         WindowGroup {
-            //TODO: Change
             LoginView()
-                .onOpenURL {
-                    url in GIDSignIn.sharedInstance.handle(url)
-            }
+                .environment(taskViewModel)
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }
+
+
