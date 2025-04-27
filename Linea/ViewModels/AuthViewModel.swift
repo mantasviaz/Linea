@@ -114,7 +114,7 @@ class AuthViewModel: ObservableObject {
                 if let items = calendarResponse.items, !items.isEmpty {
                     print("Fetched \(items.count) events from primary calendar.")
                     
-                    let mappedTasks: [Task] = items.compactMap { event in
+                    let mappedTasks: [LineaTask] = items.compactMap { event in
                         guard let startDateString = event.start?.dateTime ?? event.start?.date,
                               let startDate = ISO8601DateFormatter().date(from: startDateString) else {
                             return nil
@@ -129,7 +129,7 @@ class AuthViewModel: ObservableObject {
                             }
                         }()
                         
-                        return Task(
+                        return LineaTask(
                             group: "Blue", // Default group color, could change this
                             title: event.summary ?? "No Title",
                             start: startDate,

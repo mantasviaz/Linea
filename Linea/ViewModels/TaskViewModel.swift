@@ -12,18 +12,18 @@ import SwiftData
 class TaskViewModel {
     private let container: ModelContainer
     private var context: ModelContext { container.mainContext }
-    var tasks: [Task] = []
+    var tasks: [LineaTask] = []
     var groups: [String: Color] = [:]
     var colors: [String: Color] = ["Blue": Color(red: 0.8, green: 0.89, blue: 1), "Red": Color(red: 1, green: 0.76, blue: 0.76), "Orange": Color(red: 1, green: 0.87, blue: 0.65), "Green": Color(red: 0.84, green: 0.95, blue: 0.77), "Purple": Color(red: 0.89, green: 0.84, blue: 0.95)]
     
     init() {
         do {
-            container = try ModelContainer(for: Task.self, GroupColor.self)
+            container = try ModelContainer(for: LineaTask.self, GroupColor.self)
         } catch {
             fatalError("Failed to create SwiftData container: \(error)")
         }
 
-        let taskDescriptor = FetchDescriptor<Task>()
+        let taskDescriptor = FetchDescriptor<LineaTask>()
         tasks = (try? context.fetch(taskDescriptor)) ?? []
 
         var loadedGroups: [String: Color] = [:]
@@ -69,7 +69,7 @@ class TaskViewModel {
         return (CGFloat(wholeDays) + CGFloat(fraction)) * dayWidth
     }
     
-    func update(_ task: Task) {
+    func update(_ task: LineaTask) {
         if let idx = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[idx] = task           // existing task edited
         } else {
@@ -80,7 +80,7 @@ class TaskViewModel {
         try? context.save()
     }
 
-    func delete(_ task: Task) {
+    func delete(_ task: LineaTask) {
         tasks.removeAll { $0.id == task.id }
         context.delete(task)
         try? context.save()
@@ -126,56 +126,56 @@ class TaskViewModel {
     }
 }
 
-extension Task {
-    static let samples: [Task] = {
+extension LineaTask {
+    static let samples: [LineaTask] = {
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
 
         return [
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Blue",
                 title: "Blue",
                 start: formatter.date(from: "2025-04-24 00:00")!,
                 end: formatter.date(from: "2025-04-25 00:00")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Green",
                 title: "Green",
                 start: formatter.date(from: "2025-04-23 12:00")!,
                 end: formatter.date(from: "2025-04-24 12:00")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Red",
                 title: "Red",
                 start: formatter.date(from: "2025-04-22 10:00")!,
                 end: formatter.date(from: "2025-04-26 14:00")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Purple",
                 title: "Purple",
                 start: formatter.date(from: "2025-04-22 15:00")!,
                 end: formatter.date(from: "2025-04-24 19:41")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Orange",
                 title: "Orange",
                 start: formatter.date(from: "2025-04-24 00:00")!,
                 end: formatter.date(from: "2025-04-25 00:00")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Orange",
                 title: "Test New Builds",
                 start: formatter.date(from: "2025-04-21 10:00")!,
                 end: formatter.date(from: "2025-04-27 14:00")!
             ),
-            Task(
+            LineaTask(
                 id: UUID(),
                 group: "Blue",
                 title: "CIS 3200 - HW 4",

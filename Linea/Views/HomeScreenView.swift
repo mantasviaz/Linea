@@ -44,7 +44,7 @@ struct TimelineScrollView: View {
     @Binding var scrollX: CGFloat
     @State private var didInitialScroll = false
     @Environment(TaskViewModel.self) var taskViewModel
-    @Binding var selectedTask: Task?
+    @Binding var selectedTask: LineaTask?
     @Binding var showTaskDetailSheet: Bool
     @Binding var showAddSheet: Bool
 
@@ -307,7 +307,7 @@ struct BottomSheet<Content: View>: View {
 
 struct TodayFocusView: View {
     @Environment(TaskViewModel.self) private var taskViewModel
-    var onTap: (Task) -> Void = { _ in }
+    var onTap: (LineaTask) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -383,10 +383,10 @@ struct CustomTabBarController: UIViewControllerRepresentable {
 }
 
 struct HomeTabView: View {
-    @State private var editingTask: Task? = nil
+    @State private var editingTask: LineaTask? = nil
     @State private var scrollX: CGFloat = 0
     @State private var isSheetExpanded = false
-    @State private var selectedTask: Task? = nil
+    @State private var selectedTask: LineaTask? = nil
     @State private var showTaskDetailSheet = false
     @State private var sheetDragOffset: CGFloat = 0
     @State private var sheetPosition: Int = 1  // 0 = small, 1 = medium (start), 2 = expanded
@@ -542,7 +542,7 @@ struct HomeTabView: View {
 struct AddTab: View {
     @Binding var showAddSheet: Bool
     @Binding var showNewGroupSheet: Bool
-    var editingTask: Task?
+    var editingTask: LineaTask?
     @State var selectedGroup: String
 
     @State private var title: String
@@ -555,7 +555,7 @@ struct AddTab: View {
     
     init(showAddSheet: Binding<Bool>,
          showNewGroupSheet: Binding<Bool>,
-         editingTask: Task?) {
+         editingTask: LineaTask?) {
         self._showAddSheet = showAddSheet
         self._showNewGroupSheet = showNewGroupSheet
         self.editingTask = editingTask
@@ -617,14 +617,14 @@ struct AddTab: View {
                 Spacer()
                 Button(action: {
                     if let original = editingTask {
-                        let updated = Task(id: original.id,
+                        let updated = LineaTask(id: original.id,
                                            group: selectedGroup,
                                            title: title,
                                            start: startDate,
                                            end: endDate)
                         taskViewModel.update(updated)
                     } else {
-                        let newTask = Task(id: UUID(),
+                        let newTask = LineaTask(id: UUID(),
                                            group: selectedGroup,
                                            title: title,
                                            start: startDate,
@@ -828,7 +828,7 @@ struct SettingsTabView: View {
 }
 
 struct FocusTask: View {
-    let task: Task
+    let task: LineaTask
     @Environment(TaskViewModel.self) private var taskViewModel
     
     var body: some View {
@@ -1048,10 +1048,10 @@ struct NewGroupView: View {
 }
 
 struct TaskDetailView: View {
-    var task: Task
+    var task: LineaTask
     @Binding var showTaskDetailSheet: Bool
     @Binding var showAddSheet: Bool
-    @Binding var editingTask: Task?
+    @Binding var editingTask: LineaTask?
     @Environment(TaskViewModel.self) private var taskViewModel
     @State private var showDeleteConfirmation = false
 

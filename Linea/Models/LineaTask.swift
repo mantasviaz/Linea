@@ -9,7 +9,7 @@ import SwiftData
 import UIKit
 
 @Model
-final class Task: Identifiable, Equatable {
+final class LineaTask: Identifiable, Equatable {
     @Attribute(.unique) var id: UUID
     var group: String
     var title: String
@@ -24,7 +24,7 @@ final class Task: Identifiable, Equatable {
         self.end = end
     }
 
-    static func == (lhs: Task, rhs: Task) -> Bool {
+    static func == (lhs: LineaTask, rhs: LineaTask) -> Bool {
         lhs.id == rhs.id
     }
 }

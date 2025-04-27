@@ -10,7 +10,7 @@ import Observation
 import UIKit
 
 struct TaskBar: View {
-    @Binding var task: Task
+    @Binding var task: LineaTask
     var dayWidth: CGFloat
     @Environment(TaskViewModel.self) var taskViewModel
     @State private var isDraggingStart = false
