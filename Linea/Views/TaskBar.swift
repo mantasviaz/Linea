@@ -14,6 +14,7 @@ struct TaskBar: View {
     var dayWidth: CGFloat
     @Environment(TaskViewModel.self) var taskViewModel
     @State private var isDraggingStart = false
+    @State private var textWidth: CGFloat = 0
 
     var body: some View {
         let startX = taskViewModel.xPosition(for: task.start, dayWidth: dayWidth)
@@ -26,7 +27,8 @@ struct TaskBar: View {
             RoundedRectangle(cornerRadius: 10)
                 .fill(color)
                 .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 2)
-            VStack(alignment: .leading){
+                .frame(width: width, height: 45)
+            VStack(alignment: .leading) {
                 Text(task.title)
                     .font(.system(size: 13).weight(.bold))
                     .lineLimit(1)
@@ -36,12 +38,24 @@ struct TaskBar: View {
                     .foregroundStyle(color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
                     .lineLimit(1)
             }
-            .padding(.horizontal, 12)
-
+            .fixedSize()
+            .background(GeometryReader { geo in
+                Color.clear.preference(key: TextWidthKey.self, value: geo.size.width)
+            })
+            .onPreferenceChange(TextWidthKey.self) { widthValue in
+                textWidth = widthValue
+            }
+            .offset(x: textWidth > width ? width + 8 : 12)
                 
         }
-        .frame(width: width, height: 45)
         .offset(x: startX)
+    }
+}
+
+private struct TextWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

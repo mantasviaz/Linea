@@ -67,8 +67,9 @@ struct TimelineScrollView: View {
                     CurrentTimelineView(dayWidth: dayWidth)
                         .id("now")
                         .zIndex(0)
-
-                    TimelineGridView(dayWidth: dayWidth)
+                    
+                    //TODO: Decide if want
+                    //TimelineGridView(dayWidth: dayWidth)
 
                     VStack(alignment: .leading, spacing: 9) {
                         ForEach(taskViewModel.tasks, id: \.id) { task in
@@ -1052,6 +1053,7 @@ struct TaskDetailView: View {
     @Binding var showAddSheet: Bool
     @Binding var editingTask: Task?
     @Environment(TaskViewModel.self) private var taskViewModel
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         let now = Date()
@@ -1086,10 +1088,7 @@ struct TaskDetailView: View {
                     .foregroundStyle(Color.red)
                     .fontWeight(.bold)
                     .onTapGesture {
-                        withAnimation(.interactiveSpring) {
-                            taskViewModel.delete(task)
-                            showTaskDetailSheet = false
-                        }
+                        showDeleteConfirmation = true
                     }
                     .padding(.leading, -11)
                     .padding(.top, 15)
@@ -1158,5 +1157,14 @@ struct TaskDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 11)
         .padding(.trailing, 11)
+        .confirmationDialog("Are you sure you want to delete?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                withAnimation(.interactiveSpring) {
+                    taskViewModel.delete(task)
+                    showTaskDetailSheet = false
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
 }
