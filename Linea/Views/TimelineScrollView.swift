@@ -82,12 +82,12 @@ struct TimelineScrollView: View {
                     }
                 }
             }
+            .onAppear {
+                UIScrollView.appearance().bounces = false
+            }
         }
         .onAppear {
             UIScrollView.appearance().bounces = false
-        }
-        .onDisappear {
-            UIScrollView.appearance().bounces = true
         }
 
     }
