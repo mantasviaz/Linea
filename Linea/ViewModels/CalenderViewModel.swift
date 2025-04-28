@@ -1,6 +1,0 @@
-//
-//  CalenderViewModel.swift
-//  Linea
-//
-
-

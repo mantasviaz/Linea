@@ -155,7 +155,7 @@ extension LoginView {
                     .frame(width: 16, height: 16, alignment: .center)
             }
             
-            Text(!brand.isEmpty ? "Sign in with \(brand)" : "Continue without Sign In")
+            Text(!brand.isEmpty ? "Import from \(brand)" : "Continue without Import")
                 .font(.system(size: 19))
                 .fontWeight(.semibold)
                 .foregroundColor(!brand.isEmpty ? .black : .white)

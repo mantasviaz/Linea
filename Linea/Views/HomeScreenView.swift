@@ -55,13 +55,14 @@ struct CustomTabBarController: UIViewControllerRepresentable {
         let homeVC = UIHostingController(rootView: TabHomeView())
         homeVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "house"), tag: 0)
         // Add Tab
-        let addVC = UIHostingController(rootView: TabAddView())
-        addVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "add"), tag: 1)
+        //let addVC = UIHostingController(rootView: TabAddView())
+        //addVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "add"), tag: 1)
         // Settings Tab
         let settingsVC = UIHostingController(rootView: TabSettingsView(selectedTab: $selectedTab))
-        settingsVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "settings"), tag: 2)
+        settingsVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "settings"), tag: 1)
 
-        tabBarController.viewControllers = [homeVC, addVC, settingsVC]
+        //tabBarController.viewControllers = [homeVC, addVC, settingsVC]
+        tabBarController.viewControllers = [homeVC, settingsVC]
         tabBarController.selectedIndex = selectedTab
         tabBarController.delegate = context.coordinator
         return tabBarController

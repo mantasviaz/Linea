@@ -18,7 +18,7 @@ struct FocusView: View {
                 .font(.system(size: 21).weight(.bold))
                 .padding(.top, -10)
             let now = Date()
-            ForEach(taskViewModel.tasks.filter { $0.end >= now && $0.completed == false}) { task in
+            ForEach(taskViewModel.tasks.filter { $0.end >= now && $0.start <= now && $0.completed == false}) { task in
                 FocusRow(task: Binding(
                     get: {
                         taskViewModel.tasks.first(where: { $0.id == task.id }) ?? task

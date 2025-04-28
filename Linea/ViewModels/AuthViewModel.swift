@@ -137,7 +137,7 @@ class AuthViewModel: ObservableObject {
                             }()
                             
                             return LineaTask(
-                                group: "Green",
+                                group: "",
                                 title: event.summary ?? "No Title",
                                 start: startDate,
                                 end: endDate,

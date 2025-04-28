@@ -45,7 +45,9 @@ struct EditGroupView: View {
                             oncolorTap: {
                                 selectedGroupKey = key
                                 tempColor = color
-                                showColorPicker = true
+                                withAnimation(.interactiveSpring) {
+                                    showColorPicker = true
+                                }
                                 origColor = color
                             },
                             onDelete: {

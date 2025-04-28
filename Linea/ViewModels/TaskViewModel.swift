@@ -44,13 +44,7 @@ class TaskViewModel {
         self.groups = loadedGroups
 
         if groups.isEmpty {
-            self.groups = [
-                "Blue": colors["Blue"]!,
-                "Red": colors["Red"]!,
-                "Orange": colors["Orange"]!,
-                "Green": colors["Green"]!,
-                "Purple": colors["Purple"]!
-            ]
+            self.groups = [ : ]
             for (name, colour) in groups {
                 context.insert(GroupColor(name: name, color: colour))
             }
@@ -79,7 +73,7 @@ class TaskViewModel {
         }
     }
 
-    func deleteGoogleTasks() { // ✅ NEW FUNCTION
+    func deleteGoogleTasks() {
         let googleTasks = tasks.filter { $0.isFromGoogle }
         for task in googleTasks {
             delete(task)

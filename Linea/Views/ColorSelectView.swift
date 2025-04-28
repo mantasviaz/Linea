@@ -52,7 +52,9 @@ struct ColorSelectView: View {
                             tempColor = color
                             taskViewModel.updateGroupColor(name: selectedGroupKey,
                                                            color: color)
-                            showColorPicker = false
+                            withAnimation(.interactiveSpring) {
+                                showColorPicker = false
+                            }
                         }
                         .padding(.trailing, 5)
 
