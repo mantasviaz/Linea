@@ -129,7 +129,12 @@ struct TabHomeView: View {
                                 translation: $addSheetDragOffset,
                                 collapsedY: collapsedY,
                                 showHandle: false) {
-                        TaskBigDetailView(task: task, showTaskDetailSheet: $showTaskDetailSheet, showAddSheet: $showAddSheet, editingTask: $editingTask)
+                        TaskBigDetailView(task: Binding(
+                            get: {
+                                taskViewModel.tasks.first(where: { $0.id == task.id }) ?? task
+                            },
+                            set: { taskViewModel.update($0) }
+                        ), showTaskDetailSheet: $showTaskDetailSheet, showAddSheet: $showAddSheet, editingTask: $editingTask)
                     }
                     .frame(width: geo.size.width, height: fullHeight, alignment: .top)
                     .ignoresSafeArea(edges: [.horizontal, .bottom])

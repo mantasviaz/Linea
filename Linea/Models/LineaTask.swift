@@ -9,19 +9,22 @@ import SwiftData
 import UIKit
 
 @Model
-final class LineaTask: Identifiable, Equatable {
+final class LineaTask: ObservableObject, Identifiable, Equatable {
     @Attribute(.unique) var id: UUID
     var group: String
     var title: String
     var start: Date
     var end: Date
+    var completed: Bool
 
-    init(id: UUID = UUID(), group: String, title: String, start: Date, end: Date) {
+    init(id: UUID = UUID(), group: String, title: String, start: Date, end: Date, completed: Bool) {
         self.id = id
         self.group = group
         self.title = title
         self.start = start
         self.end = end
+        self.completed = completed
+
     }
 
     static func == (lhs: LineaTask, rhs: LineaTask) -> Bool {

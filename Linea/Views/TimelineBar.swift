@@ -20,7 +20,7 @@ struct TimelineBar: View {
         let startX = taskViewModel.xPosition(for: task.start, dayWidth: dayWidth)
         let width = taskViewModel.xPosition(for: task.end, dayWidth: dayWidth) - startX
         let group = task.group
-        let color = taskViewModel.groups.first(where: { $0.key == group })?.value ?? Color(red: 0.88, green: 0.88, blue: 0.88)
+        let color = task.completed ? Color(red: 0.96, green: 0.96, blue: 0.96) : taskViewModel.groups.first(where: { $0.key == group })?.value ?? Color(red: 0.87, green: 0.87, blue: 0.87)
         
         
         ZStack(alignment: .leading) {
@@ -29,12 +29,11 @@ struct TimelineBar: View {
                 .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 2)
                 .frame(width: width, height: 45)
             VStack(alignment: .leading) {
-                Text("\(task.group) - \(task.title)")
+                Text(task.group.isEmpty ? task.title : "\(task.group) - \(task.title)")
                     .font(.system(size: 13).weight(.bold))
                     .lineLimit(1)
                     .foregroundStyle(textWidth > width - 10 ? .black : color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
-                Text("\(formattedDateRange(start: task.start, end: task.end))")
-                    .font(.system(size: 9))
+                Text(formattedTimelineDateRange(start: task.start, end: task.end))
                     .foregroundStyle(textWidth > width - 10 ? .black : color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
                     .lineLimit(1)
             }
@@ -73,6 +72,35 @@ extension Color {
 
         return luminance > 0.6 ? darkTextColor : lightTextColor
     }
+}
+
+func formattedTimelineDateRange(start: Date, end: Date) -> AttributedString {
+    var result = AttributedString("")
+    
+    let calendar = Calendar.current
+    let sameDay = calendar.isDate(start, inSameDayAs: end)
+    
+    let monthDayFormatter = DateFormatter()
+    monthDayFormatter.dateFormat = "MMM d"
+    
+    let timeFormatter = DateFormatter()
+    timeFormatter.dateFormat = "h:mm a"
+    
+    var startDate = AttributedString(monthDayFormatter.string(from: start) + " ")
+    startDate.font = .system(size: 9, weight: .semibold)
+    
+    var arrow = AttributedString(" → ")
+    arrow.font = .system(size: 9)
+    
+    var endDate = AttributedString(monthDayFormatter.string(from: end) + " ")
+    endDate.font = .system(size: 9, weight: .semibold)
+    
+    var endTime = AttributedString(timeFormatter.string(from: end))
+    endTime.font = .system(size: 9)
+    
+    result = startDate + arrow + endDate + endTime
+    
+    return result
 }
 
 func formattedDateRange(start: Date, end: Date) -> String {

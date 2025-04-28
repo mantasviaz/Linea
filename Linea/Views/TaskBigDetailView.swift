@@ -9,7 +9,7 @@ import SwiftUI
 import Foundation
 
 struct TaskBigDetailView: View {
-    var task: LineaTask
+    @Binding var task: LineaTask
     @Binding var showTaskDetailSheet: Bool
     @Binding var showAddSheet: Bool
     @Binding var editingTask: LineaTask?
@@ -61,10 +61,10 @@ struct TaskBigDetailView: View {
             HStack {
                 Capsule()
                     .frame(width: 8, height: 90)
-                    .foregroundColor(taskViewModel.groups[task.group]?.darkerCustom())
+                    .foregroundColor(task.group.isEmpty ? Color(red: 0.87, green: 0.87, blue: 0.87) : taskViewModel.groups[task.group]?.darkerCustom())
                     .padding(.top, 10)
                 VStack(alignment: .leading){
-                    Text("\(task.group) - \(task.title)")
+                    Text(task.group.isEmpty ? task.title : "\(task.group) - \(task.title)")
                         .font(.system(size: 28).weight(.bold))
                         //.lineLimit(1)
                         .padding(.bottom, -2)
@@ -99,23 +99,28 @@ struct TaskBigDetailView: View {
             .padding(.top, -10)
             
             Button(action: {
+                withAnimation (.interactiveSpring){
+                    task.completed.toggle()
+                    showTaskDetailSheet = false
+                }
+                
+                
             }) {
-                Text("Mark as Completed")
-                    .foregroundStyle(.white)
+                Text(task.completed ? "Mark as Incomplete" : "Mark as Completed")
+                    .foregroundStyle(task.completed ? Color(red: 0, green: 0.48, blue: 1) : .white)
                     .font(.system(size: 17).weight(.semibold))
-                    .background(){
-                        Rectangle()
-                          .foregroundColor(.clear)
-                          .frame(width: 213, height: 45)
-                          .background(Color(red: 0, green: 0.48, blue: 1))
-                          .cornerRadius(14)
-                    }
+                    .padding(12)
+                    .padding(.horizontal, 5)
+                    .background(task.completed ? .white : Color(red: 0, green: 0.48, blue: 1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(task.completed ? Color(red: 0, green: 0.48, blue: 1) : .clear, lineWidth: 2)
+                    )
+                    .cornerRadius(14)
                     .padding(.top, 8)
+                    
             }
 
-
-            
-            
 
         }
         .frame(maxWidth: .infinity, alignment: .leading)

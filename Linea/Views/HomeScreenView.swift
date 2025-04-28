@@ -8,6 +8,7 @@ import Observation
 import UIKit
 
 
+
 struct HomeScreenView: View {
     @State private var selectedTab = 0
     @Environment(TaskViewModel.self) var taskViewModel
@@ -15,9 +16,7 @@ struct HomeScreenView: View {
     @State private var isSheetExpanded = false
     @State private var sheetDragOffset: CGFloat = 0
 
-    init() {
-        UIScrollView.appearance().bounces = false
-    }
+
     var body: some View {
         CustomTabBarController(selectedTab: $selectedTab)
             .ignoresSafeArea(edges: .bottom)
@@ -97,6 +96,7 @@ struct CustomTabBarController: UIViewControllerRepresentable {
 extension Color {
     func darkerCustom() -> Color {
         let uiColor = UIColor(self)
+
         var r: CGFloat = 0
         var g: CGFloat = 0
         var b: CGFloat = 0
@@ -105,7 +105,7 @@ extension Color {
         if uiColor.getRed(&r, green: &g, blue: &b, alpha: &a) {
             let average = (r + g + b) / 3
             let vibrancyBoost: CGFloat = 0.2
-
+        
             
             let lightnessThreshold: CGFloat = 0.85
             if (r + g + b) / 3 > lightnessThreshold {
@@ -113,7 +113,6 @@ extension Color {
                 g *= 0.98
                 b *= 0.98
             }
-
 
             return Color(red: r, green: g, blue: b, opacity: a)
         } else {

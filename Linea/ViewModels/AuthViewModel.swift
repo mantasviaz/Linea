@@ -140,7 +140,8 @@ class AuthViewModel: ObservableObject {
                                 group: "Green",
                                 title: event.summary ?? "No Title",
                                 start: startDate,
-                                end: endDate
+                                end: endDate,
+                                completed: false
                             )
                         }
                         

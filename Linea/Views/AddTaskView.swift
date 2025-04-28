@@ -88,14 +88,16 @@ struct AddTaskView: View {
                                            group: selectedGroup,
                                            title: title,
                                            start: startDate,
-                                           end: endDate)
+                                           end: endDate,
+                                                completed: original.completed)
                         taskViewModel.update(updated)
                     } else {
                         let newTask = LineaTask(id: UUID(),
                                            group: selectedGroup,
                                            title: title,
                                            start: startDate,
-                                           end: endDate)
+                                           end: endDate,
+                                                completed: false)
                         taskViewModel.update(newTask)
                     }
                     withAnimation(.interactiveSpring) { showAddSheet.toggle()

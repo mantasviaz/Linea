@@ -18,9 +18,13 @@ struct FocusView: View {
                 .font(.system(size: 21).weight(.bold))
                 .padding(.top, -10)
             let now = Date()
-            ForEach(taskViewModel.tasks.filter { $0.end >= now }) { task in
-                FocusRow(task: task)
-                    .id(task.group)
+            ForEach(taskViewModel.tasks.filter { $0.end >= now && $0.completed == false}) { task in
+                FocusRow(task: Binding(
+                    get: {
+                        taskViewModel.tasks.first(where: { $0.id == task.id }) ?? task
+                    },
+                    set: { taskViewModel.update($0) }
+                ))
                     .onTapGesture { onTap(task) }
                 Rectangle()
                     .fill(Color(red: 0.88, green: 0.88, blue: 0.88))

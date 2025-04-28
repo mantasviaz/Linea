@@ -10,15 +10,18 @@ import Foundation
 
 
 struct EditGroupView: View {
+
     @Binding var showNewGroupSheet: Bool
     @Binding var showColorPicker: Bool
     @Binding var selectedGroupKey: String
     @Binding var tempColor: Color
     @Binding var origColor: Color
+    
 
     @Environment(TaskViewModel.self) private var taskViewModel
 
     var body: some View {
+        
         VStack(spacing: 12) {
             HStack {
                 Spacer()
@@ -33,7 +36,7 @@ struct EditGroupView: View {
             }
             .padding(.top, 15)
 
-            ScrollView(.vertical, showsIndicators: true) {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 8) {
                     ForEach(Array(taskViewModel.groups).sorted(by: { $0.key < $1.key }), id: \.key) { key, color in
                         GroupRow(
@@ -64,6 +67,13 @@ struct EditGroupView: View {
                 }
                 .padding(.horizontal, 4)
             }
+            .onAppear {
+                UIScrollView.appearance().bounces = true
+            }
+            .onDisappear {
+                UIScrollView.appearance().bounces = false
+            }
+
             .frame(maxHeight: .infinity, alignment: .top)
         }
         .frame(maxHeight: .infinity, alignment: .top)

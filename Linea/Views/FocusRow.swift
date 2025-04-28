@@ -9,7 +9,7 @@ import SwiftUI
 import Foundation
 
 struct FocusRow: View {
-    let task: LineaTask
+    @Binding var task: LineaTask
     @Environment(TaskViewModel.self) private var taskViewModel
     
     var body: some View {
@@ -18,9 +18,9 @@ struct FocusRow: View {
         HStack {
             Capsule()
                 .frame(width: 6, height: 40)
-                .foregroundColor(taskViewModel.groups[task.group]?.darkerCustom())
+                .foregroundColor(task.group.isEmpty ? Color(red: 0.87, green: 0.87, blue: 0.87) : taskViewModel.groups[task.group]?.darkerCustom())
             VStack(alignment: .leading){
-                Text("\(task.group) - \(task.title)")
+                Text(task.group.isEmpty ? task.title : "\(task.group) - \(task.title)")
                     .font(.system(size: 13).weight(.bold))
                     .lineLimit(1)
                     .padding(.bottom, -2)
@@ -43,7 +43,6 @@ struct FocusRow: View {
                 }
             }
         }
-        .id(task.group)
         .padding(.horizontal, 8)
         .padding(.bottom, -6)
         .padding(.top, -6)
