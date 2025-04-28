@@ -9,6 +9,7 @@ import AVKit
 struct LoginView: View {
     @StateObject private var authViewModel = AuthViewModel()
     @State private var navigateToHome = false
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     @Environment(TaskViewModel.self) var taskViewModel
     
     var body: some View {
@@ -53,10 +54,6 @@ struct LoginView: View {
             }
         }
     }
-}
-
-#Preview {
-    LoginView()
 }
 
 struct LoopingVideoPlayer: UIViewRepresentable {
@@ -117,6 +114,7 @@ extension LoginView {
             if brand == "Google" {
                 Button(action: {
                     authViewModel.signInWithGoogle(taskViewModel: taskViewModel) {
+                        isLoggedIn = true
                         navigateToHome = true
                     }
                 }) {
@@ -124,6 +122,7 @@ extension LoginView {
                 }
             } else if brand.isEmpty {
                 Button(action: {
+                    isLoggedIn = true
                     navigateToHome = true
                 }) {
                     cardContent(logo: logo, brand: brand)

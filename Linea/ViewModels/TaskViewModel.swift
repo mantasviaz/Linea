@@ -30,7 +30,9 @@ class TaskViewModel {
             fatalError("Failed to create SwiftData container: \(error)")
         }
 
-        let taskDescriptor = FetchDescriptor<LineaTask>()
+        let taskDescriptor = FetchDescriptor<LineaTask>(
+            sortBy: [SortDescriptor(\.end, order: .forward)]
+        )
         tasks = (try? context.fetch(taskDescriptor)) ?? []
 
         var loadedGroups: [String: Color] = [:]
@@ -65,6 +67,18 @@ class TaskViewModel {
         let start = windowOrigin
         let end = Calendar.current.date(byAdding: .year, value: 2, to: windowOrigin)
         return start...end!
+    }
+    
+
+    func deleteAllEvents() {
+        for task in tasks {
+            delete(task)
+        }
+
+        let groupNames = Array(groups.keys)
+        for name in groupNames {
+            deleteGroup(name: name)
+        }
     }
     
     func xPosition(for date: Date, dayWidth: CGFloat) -> CGFloat {
@@ -134,67 +148,11 @@ class TaskViewModel {
     
     @MainActor
     func fetchAllTasks() -> [LineaTask] {
-        let descriptor = FetchDescriptor<LineaTask>()
+        let descriptor = FetchDescriptor<LineaTask>(
+            sortBy: [SortDescriptor(\.end, order: .forward)]
+        )
         return (try? context.fetch(descriptor)) ?? []
     }
 }
 
-extension LineaTask {
-    static let samples: [LineaTask] = {
-        let calendar = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-
-        return [
-            LineaTask(
-                id: UUID(),
-                group: "Blue",
-                title: "Blue",
-                start: formatter.date(from: "2025-04-24 00:00")!,
-                end: formatter.date(from: "2025-04-25 00:00")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Green",
-                title: "Green",
-                start: formatter.date(from: "2025-04-23 12:00")!,
-                end: formatter.date(from: "2025-04-24 12:00")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Red",
-                title: "Red",
-                start: formatter.date(from: "2025-04-22 10:00")!,
-                end: formatter.date(from: "2025-04-26 14:00")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Purple",
-                title: "Purple",
-                start: formatter.date(from: "2025-04-22 15:00")!,
-                end: formatter.date(from: "2025-04-24 19:41")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Orange",
-                title: "Orange",
-                start: formatter.date(from: "2025-04-24 00:00")!,
-                end: formatter.date(from: "2025-04-25 00:00")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Orange",
-                title: "Test New Builds",
-                start: formatter.date(from: "2025-04-21 10:00")!,
-                end: formatter.date(from: "2025-04-27 14:00")!
-            ),
-            LineaTask(
-                id: UUID(),
-                group: "Blue",
-                title: "CIS 3200 - HW 4",
-                start: formatter.date(from: "2025-04-21 15:00")!,
-                end: formatter.date(from: "2025-04-23 16:30")!
-            )
-        ]
-    }()
-}
+ 

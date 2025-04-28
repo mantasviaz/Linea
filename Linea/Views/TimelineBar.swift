@@ -1,5 +1,5 @@
 //
-//  TaskBar.swift
+//  TimelineBar.swift
 //  Linea
 //
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import Observation
 import UIKit
 
-struct TaskBar: View {
+struct TimelineBar: View {
     @Binding var task: LineaTask
     var dayWidth: CGFloat
     @Environment(TaskViewModel.self) var taskViewModel
@@ -29,13 +29,13 @@ struct TaskBar: View {
                 .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 2)
                 .frame(width: width, height: 45)
             VStack(alignment: .leading) {
-                Text(task.title)
+                Text("\(task.group) - \(task.title)")
                     .font(.system(size: 13).weight(.bold))
                     .lineLimit(1)
-                    .foregroundStyle(color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
+                    .foregroundStyle(textWidth > width - 10 ? .black : color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
                 Text("\(formattedDateRange(start: task.start, end: task.end))")
                     .font(.system(size: 9))
-                    .foregroundStyle(color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
+                    .foregroundStyle(textWidth > width - 10 ? .black : color.appropriateTextColor(darkTextColor: .black, lightTextColor: .white))
                     .lineLimit(1)
             }
             .fixedSize()
@@ -45,7 +45,7 @@ struct TaskBar: View {
             .onPreferenceChange(TextWidthKey.self) { widthValue in
                 textWidth = widthValue
             }
-            .offset(x: textWidth > width ? width + 8 : 12)
+            .offset(x: textWidth > width - 10 ? width + 8 : 12)
                 
         }
         .offset(x: startX)
@@ -118,5 +118,5 @@ func formattedBiggerDateRange(start: Date, end: Date) -> String {
 }
 
 //#Preview {
-//    TaskBar()
+//    TimelineBar()
 //}

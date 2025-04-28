@@ -9,16 +9,23 @@ import GoogleSignIn
 @main
 struct LineaApp: App {
     @State var taskViewModel = TaskViewModel()
+    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
 
     var body: some Scene {
         WindowGroup {
-            LoginView()
-                .environment(taskViewModel)
-                .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+            Group {
+                if isLoggedIn {
+                    HomeScreenView()
+                        .environment(taskViewModel)
+                } else {
+                    LoginView()
+                        .environment(taskViewModel)
                 }
+            }
+            .onOpenURL { url in
+                GIDSignIn.sharedInstance.handle(url)
+            }
         }
     }
 }
-
 

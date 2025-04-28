@@ -34,6 +34,7 @@ class AuthViewModel: ObservableObject {
             
             self.user = result.user
             self.isSignedIn = true
+            UserDefaults.standard.set(true, forKey: "isLoggedIn")
             
             print("Signed in as: \(result.user.profile?.name ?? "No Name")")
             print("Email: \(result.user.profile?.email ?? "No Email")")
@@ -70,6 +71,7 @@ class AuthViewModel: ObservableObject {
         GIDSignIn.sharedInstance.signOut()
         self.user = nil
         self.isSignedIn = false
+        UserDefaults.standard.set(false, forKey: "isLoggedIn")
         print("Signed out of Google.")
     }
     
@@ -164,4 +166,3 @@ class AuthViewModel: ObservableObject {
         }.resume()
     }
 }
-
