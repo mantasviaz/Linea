@@ -141,7 +141,8 @@ class AuthViewModel: ObservableObject {
                                 title: event.summary ?? "No Title",
                                 start: startDate,
                                 end: endDate,
-                                completed: false
+                                completed: false,
+                                isFromGoogle: true
                             )
                         }
                         

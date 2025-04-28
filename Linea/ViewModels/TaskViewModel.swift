@@ -69,15 +69,20 @@ class TaskViewModel {
         return start...end!
     }
     
-
     func deleteAllEvents() {
         for task in tasks {
             delete(task)
         }
-
         let groupNames = Array(groups.keys)
         for name in groupNames {
             deleteGroup(name: name)
+        }
+    }
+
+    func deleteGoogleTasks() { // ✅ NEW FUNCTION
+        let googleTasks = tasks.filter { $0.isFromGoogle }
+        for task in googleTasks {
+            delete(task)
         }
     }
     
@@ -92,9 +97,9 @@ class TaskViewModel {
     
     func update(_ task: LineaTask) {
         if let idx = tasks.firstIndex(where: { $0.id == task.id }) {
-            tasks[idx] = task // existing task edited
+            tasks[idx] = task
         } else {
-            tasks.append(task) // new task added
+            tasks.append(task)
         }
         tasks.sort { $0.end < $1.end }
         context.insert(task)
@@ -106,10 +111,9 @@ class TaskViewModel {
         context.delete(task)
         try? context.save()
     }
-    
+
     func renameGroup(oldName: String, newName: String) {
-        guard oldName != newName,
-              !newName.isEmpty,
+        guard oldName != newName, !newName.isEmpty,
               let colour = groups.removeValue(forKey: oldName) else { return }
         
         groups[newName] = colour
@@ -146,7 +150,6 @@ class TaskViewModel {
         try? context.save()
     }
     
-    @MainActor
     func fetchAllTasks() -> [LineaTask] {
         let descriptor = FetchDescriptor<LineaTask>(
             sortBy: [SortDescriptor(\.end, order: .forward)]
@@ -154,5 +157,4 @@ class TaskViewModel {
         return (try? context.fetch(descriptor)) ?? []
     }
 }
-
 

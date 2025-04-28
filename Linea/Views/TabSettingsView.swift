@@ -1,8 +1,6 @@
 //
-//  Untitled.swift
+//  TabSettingsView.swift
 //  Linea
-//
-//  Created by Mantas Viazmitinas on 4/27/25.
 //
 
 import SwiftUI
@@ -18,6 +16,7 @@ struct TabSettingsView: View {
         VStack(spacing: 40) {
             Button(action: {
                 authViewModel.signOutFromGoogle()
+                taskViewModel.deleteGoogleTasks()
                 logoutAndResetApp()
             }) {
                 Text("Log Out")

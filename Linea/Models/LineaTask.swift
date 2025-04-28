@@ -16,15 +16,16 @@ final class LineaTask: ObservableObject, Identifiable, Equatable {
     var start: Date
     var end: Date
     var completed: Bool
+    var isFromGoogle: Bool
 
-    init(id: UUID = UUID(), group: String, title: String, start: Date, end: Date, completed: Bool) {
+    init(id: UUID = UUID(), group: String, title: String, start: Date, end: Date, completed: Bool, isFromGoogle: Bool = false) {
         self.id = id
         self.group = group
         self.title = title
         self.start = start
         self.end = end
         self.completed = completed
-
+        self.isFromGoogle = isFromGoogle
     }
 
     static func == (lhs: LineaTask, rhs: LineaTask) -> Bool {

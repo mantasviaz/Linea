@@ -32,8 +32,10 @@ struct LoginView: View {
                             .foregroundColor(.white)
                             .padding(.bottom, 6)
                         
+                        /*
                         loginCard(logo: "apple.logo", brand: "Apple")
                             .padding(.bottom, 7)
+                        */
                         
                         loginCard(logo: "googleLogo", brand: "Google")
                             .padding(.bottom, 7)
