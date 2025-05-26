@@ -117,6 +117,7 @@ struct CameraScanSheet: View {
                      */
                     
                     if frozenImage == nil {
+                        
                         Text("Take a picture of your schedule or notes")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .foregroundStyle(.gray)
@@ -136,22 +137,20 @@ struct CameraScanSheet: View {
                                 .matchedGeometryEffect(id: "cameraFrame", in: cameraAnim)
                                 .aspectRatio(4/3, contentMode: .fit)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color.red.opacity(0.1))
-                                )
                                 .padding(.horizontal)
                         }
                     }
-
+                    
                     if let _ = frozenImage {
                         if isProcessing {
                             Spacer()
                             VStack {
                                 ProgressView()
                                     .progressViewStyle(.circular)
+                                Text("  Importing...")
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: 13))
                             }
-                            
                         } else if let result = resultText {
                             ScrollView {
                                 VStack(alignment: .leading, spacing: 0) {
@@ -174,28 +173,35 @@ struct CameraScanSheet: View {
                                             )
                                             .font(.system(size: 20, weight: .semibold))
                                             // ── Per-task group picker ─────────────────────────
-                                            ScrollView(.horizontal, showsIndicators: false) {
-                                                HStack(spacing: 8) {
-                                                    ForEach(Array(taskViewModel.groups), id: \.key) { key, color in
-                                                        GroupBar(
-                                                            group: key,
-                                                            color: color,
-                                                            selectedGroup: {
-                                                                guard idx < taskViewModel.draftTasks.count else { return "" }
-                                                                return taskViewModel.draftTasks[idx].group
-                                                            }()
-                                                        ) { _ in
-                                                            guard idx < taskViewModel.draftTasks.count else { return }
-                                                            if taskViewModel.draftTasks[idx].group == key {
-                                                                taskViewModel.draftTasks[idx].group = ""
-                                                            } else {
-                                                                taskViewModel.draftTasks[idx].group = key
+                                            HStack {
+                                                Text("Group")                 .font(.system(size: 17).weight(.semibold))
+                                                    .foregroundStyle(Color(red: 0.13, green: 0.13, blue: 0.15))
+                                                ScrollView(.horizontal, showsIndicators: false) {
+                                                    HStack(spacing: 8) {
+                                                        ForEach(Array(taskViewModel.groups), id: \.key) { key, color in
+                                                            GroupBar(
+                                                                group: key,
+                                                                color: color,
+                                                                selectedGroup: {
+                                                                    guard idx < taskViewModel.draftTasks.count else { return "" }
+                                                                    return taskViewModel.draftTasks[idx].group
+                                                                }()
+                                                            ) { _ in
+                                                                guard idx < taskViewModel.draftTasks.count else { return }
+                                                                if taskViewModel.draftTasks[idx].group == key {
+                                                                    taskViewModel.draftTasks[idx].group = ""
+                                                                } else {
+                                                                    taskViewModel.draftTasks[idx].group = key
+                                                                }
                                                             }
                                                         }
                                                     }
+                                                    .padding(.leading, 5)
+                                                    .padding(.bottom, 4)
                                                 }
-                                                .padding(.bottom, 4)
+                                                
                                             }
+                                            
                                             // ── Starts ────────────────────────────
                                             HStack {
                                                 Text("Starts")                    .font(.system(size: 17).weight(.semibold))
@@ -241,13 +247,20 @@ struct CameraScanSheet: View {
                                             }
 
                                             Divider()
-                                                .padding(.bottom, 10)
+                                                .padding(.top, 10)
+                                                .padding(.bottom, 15)
                                         }
                                         .padding(.horizontal, 22)
                                     }
                                 }
-                                .padding(.top, 4)            // little breathing room under the camera
+                                .padding(.top, 4)            // alittle breathing room under the camera
                                 .padding(.bottom, 12)        // keep last item off bottom edge
+                            }
+                            .onAppear {
+                                UIScrollView.appearance().bounces = true
+                            }
+                            .onDisappear {
+                                UIScrollView.appearance().bounces = false
                             }
                             .scrollIndicators(.hidden)       // optional: hide indicator for cleaner look
                         }
@@ -277,9 +290,11 @@ struct CameraScanSheet: View {
 
                 }
                 .frame(
-                    width: geo.size.width * 0.85,
+                    width: (resultText != nil)
+                    ? geo.size.width * 0.90   // Expanded when results are present
+            : geo.size.width * 0.85,
                     height: (resultText != nil)
-                            ? geo.size.height * 0.90   // Expanded when results are present
+                            ? geo.size.height * 0.95   // Expanded when results are present
                     : geo.size.width * 0.98   // Compact for preview & controls
                 )
                 .background(
@@ -303,17 +318,24 @@ struct CameraScanSheet: View {
                    isPresented: $showingParseAlert,
                    actions: { Button("Dismiss", role: .cancel) {} },
                    message: { Text("Please make sure the scanned text is valid JSON.") })
-            .onAppear { camera.start() }
+            .onAppear {
+                camera.start()
+
+                if frozenImage == nil, let extImg = taskViewModel.importedImage {
+                    frozenImage = extImg
+                }
+            }
             .onDisappear { camera.stop() }
         }
     }
 
     func resetState() {
-        frozenImage    = nil
-        resultText     = nil
+        frozenImage           = nil
+        resultText            = nil
         taskViewModel.draftTasks.removeAll()
-        selectedGroup  = ""
-        isProcessing   = false
+        selectedGroup         = ""
+        isProcessing          = false
+        taskViewModel.importedImage = nil
     }
     
     private var hasParsedTasks: Bool {
@@ -346,12 +368,56 @@ struct CameraScanSheet: View {
                 .last?
                 .trimmingCharacters(in: .whitespaces) ?? a.due_date
 
-            guard
-                let monthDay = DateFormatter.monthDay.date(from: dateString),
-                let time = DateFormatter.hoursMinutes.date(from: a.due_time)
-            else { return nil }
+            guard let monthDay = DateFormatter.monthDay.date(from: dateString) else { return nil }
 
-            let start = Date()
+            let time: Date
+            if !a.due_time.isEmpty, let parsedTime = DateFormatter.hoursMinutes.date(from: a.due_time) {
+                time = parsedTime
+            } else {
+                // Default to 11:59PM when no due_time is provided
+                time = DateFormatter.hoursMinutes.date(from: "11:59PM")!
+            }
+
+            // Determine start date and time
+            let start: Date
+            // Helper to combine date and time components
+            func combine(date: Date, with time: Date) -> Date {
+                let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+                let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+                var components = DateComponents()
+                components.year = dateComponents.year
+                components.month = dateComponents.month
+                components.day = dateComponents.day
+                components.hour = timeComponents.hour
+                components.minute = timeComponents.minute
+                components.second = timeComponents.second
+                return calendar.date(from: components)!
+            }
+
+            if !a.start_date.isEmpty, let startDateOnly = DateFormatter.monthDay.date(from: a.start_date) {
+                // Set year on parsed start date
+                let fullStartDate = startDateOnly.setting(year: currentYear)
+                if !a.start_time.isEmpty, let parsedTime = DateFormatter.hoursMinutes.date(from: a.start_time) {
+                    start = combine(date: fullStartDate, with: parsedTime)
+                } else {
+                    // Use current time on that date
+                    let nowComponents = calendar.dateComponents([.hour, .minute, .second], from: Date())
+                    start = calendar.date(
+                        bySettingHour: nowComponents.hour!,
+                        minute: nowComponents.minute!,
+                        second: nowComponents.second!,
+                        of: fullStartDate
+                    )!
+                }
+            } else {
+                if !a.start_time.isEmpty, let parsedTime = DateFormatter.hoursMinutes.date(from: a.start_time) {
+                    // Use today's date with parsed start_time
+                    start = combine(date: Date(), with: parsedTime)
+                } else {
+                    // Fallback to current date and time
+                    start = Date()
+                }
+            }
 
             let end = calendar.date(
                 bySettingHour: calendar.component(.hour, from: time),

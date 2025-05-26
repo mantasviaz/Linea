@@ -8,6 +8,7 @@ import SwiftUI
 import Foundation
 import AVFoundation
 import UIKit
+import PhotosUI
 
 struct TabHomeView: View {
     @State private var editingTask: LineaTask? = nil
@@ -34,6 +35,10 @@ struct TabHomeView: View {
     @State private var isProcessingScan   = false
     @State private var capturedImage: UIImage? = nil
     @State private var gptResult: String? = nil
+    
+    @State private var showImagePicker  = false
+    @State private var pickedItem: PhotosPickerItem? = nil
+    
     
 
     var body: some View {
@@ -107,9 +112,11 @@ struct TabHomeView: View {
                     .offset(y: isPlusExpanded ? -48 : 0)
                     .opacity(isPlusExpanded ? 1 : 0)
 
-                    // ── Second auxiliary button ────────────────────────────────────────────
                     Button(action: {
-                        // TODO: add action for second auxiliary button
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            isPlusExpanded = false                 // collapse the + menu
+                        }
+                        showImagePicker = true                     // open the photo picker
                     }) {
                         Rectangle()
                             .foregroundColor(.white)
@@ -122,20 +129,19 @@ struct TabHomeView: View {
                                     .stroke(.black.opacity(0.05), lineWidth: 1)
                             )
                             .overlay(
-                                Image(systemName: "line.3.horizontal.decrease.circle")
+                                Image(systemName: "photo.on.rectangle")   // gallery icon
                                     .font(.body)
                                     .foregroundStyle(.black)
                                     .padding(8)
                             )
                             .overlay(alignment: .leading) {
-                                Text("Filter")
+                                Text("Import Photo")
                                     .font(.system(size: 15).weight(.medium))
                                     .foregroundStyle(.black)
                                     .fixedSize()
                                     .padding(.leading, 52)
                                     .opacity(isPlusExpanded ? 1 : 0)
                                     .allowsHitTesting(false)
-
                             }
                     }
                     .offset(y: isPlusExpanded ? -92 : 0)
@@ -344,6 +350,28 @@ struct TabHomeView: View {
                     .zIndex(151)
             }
         }
+        .photosPicker(
+            isPresented: $showImagePicker,
+            selection: $pickedItem,
+            matching: .images,
+            photoLibrary: .shared()
+        )
+        .onChange(of: pickedItem) { newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    capturedImage    = uiImage
+                    gptResult        = nil
+                    isProcessingScan = true
+                    taskViewModel.importedImage = uiImage
+                    showScanner      = true
+                    await sendImageToGPT(uiImage)
+                    isProcessingScan = false
+                }
+                pickedItem = nil
+            }
+        }
     }
 }
 
@@ -364,13 +392,15 @@ extension TabHomeView {
                     "role": "user",
                     "content": [
                         ["type": "text",  "text": """
-Please extract the assignments listed in this image. For EACH one, return:
+Please extract the assignments listed in this image into a JSON array. For EACH one, return:
 {
   "assignment_name": "...",
+  "start_date": "...",
   "due_date": "...",
+  "start_time": "...",
   "due_time": "..."
 }
-If due time is not specified, leave it as null. Return JSON only. DO NOT HALLUCINATE
+If due time is not specified, leave it as "". If start_date and start_time given then set outputs to those. Otherwise if not given, if they seem as if they are from the same class, obligation, or project based on context, and there are multiple, set the start_date to be one day after the due_date of the one prior, and the start time to midnight. Otherwise "" for both. For assignments in the list from another class or obligation leave the start_date leave assignment date as "" and start_time as "". First events in list in same class should be start_date "". Date should be format “M/D”. Time should be format “h:mmA”. Return as a JSON array only. DO NOT HALLUCINATE
 """ ],
                         ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(imgData)"]]
                     ]

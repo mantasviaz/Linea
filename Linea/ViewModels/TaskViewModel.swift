@@ -7,12 +7,14 @@ import Foundation
 import SwiftUI
 import SwiftData
 import Observation
+import UIKit
 
 @MainActor
 @Observable
 class TaskViewModel {
     private let container: ModelContainer
     private var context: ModelContext { container.mainContext }
+    var importedImage: UIImage? = nil
     
     var draftTasks: [LineaTaskDraft] = []
     var tasks: [LineaTask] = []
