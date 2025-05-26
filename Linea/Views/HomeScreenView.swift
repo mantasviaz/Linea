@@ -1,4 +1,4 @@
-//
+//  
 //  HomeScreenView.swift
 //  Linea
 //
@@ -15,6 +15,7 @@ struct HomeScreenView: View {
     @State private var scrollX: CGFloat = 0 // current horizontal offset of the timeline
     @State private var isSheetExpanded = false
     @State private var sheetDragOffset: CGFloat = 0
+
 
 
     var body: some View {
@@ -39,6 +40,7 @@ private struct ScrollXKey: PreferenceKey {
 }
 
 struct CustomTabBarController: UIViewControllerRepresentable {
+    @State private var isPlusExpanded = false
     @Binding var selectedTab: Int
 
     func makeUIViewController(context: Context) -> UITabBarController {
@@ -52,7 +54,7 @@ struct CustomTabBarController: UIViewControllerRepresentable {
             tabBarController.tabBar.scrollEdgeAppearance = appearance
         }
         // Home Tab
-        let homeVC = UIHostingController(rootView: TabHomeView())
+        let homeVC = UIHostingController(rootView: TabHomeView(isPlusExpanded: $isPlusExpanded))
         homeVC.tabBarItem = UITabBarItem(title: nil, image: UIImage(named: "house"), tag: 0)
         // Add Tab
         //let addVC = UIHostingController(rootView: TabAddView())
@@ -69,7 +71,11 @@ struct CustomTabBarController: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UITabBarController, context: Context) {
-        uiViewController.selectedIndex = selectedTab
+        if uiViewController.selectedIndex != selectedTab {
+            uiViewController.selectedIndex = selectedTab
+            // Collapse the PLUS menu whenever the active tab changes
+            isPlusExpanded = false
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -85,6 +91,8 @@ struct CustomTabBarController: UIViewControllerRepresentable {
 
         func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
             parent.selectedTab = tabBarController.selectedIndex
+            // Collapse the PLUS menu when the user switches tabs
+            parent.isPlusExpanded = false
             if parent.selectedTab == 0 {
                 NotificationCenter.default.post(name: .homeTabSelected, object: nil)
             }

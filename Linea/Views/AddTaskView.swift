@@ -151,6 +151,12 @@ struct AddTaskView: View {
                 .padding(.bottom, 4)
                 .padding(.horizontal, 4)
             }
+            .onAppear {
+                UIScrollView.appearance().bounces = true
+            }
+            .onDisappear {
+                UIScrollView.appearance().bounces = false
+            }
             .padding(.leading, -4)
             
             Rectangle().fill(Color(red: 0.88, green: 0.88, blue: 0.88)).frame(height: 1)

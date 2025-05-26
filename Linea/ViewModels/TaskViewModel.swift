@@ -6,6 +6,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import Observation
 
 @MainActor
 @Observable
@@ -13,6 +14,7 @@ class TaskViewModel {
     private let container: ModelContainer
     private var context: ModelContext { container.mainContext }
     
+    var draftTasks: [LineaTaskDraft] = []
     var tasks: [LineaTask] = []
     var groups: [String: Color] = [:]
     var colors: [String: Color] = [
@@ -150,5 +152,21 @@ class TaskViewModel {
         )
         return (try? context.fetch(descriptor)) ?? []
     }
+    
+    func commitDraftTasks() {
+        for draft in draftTasks {
+            let task = LineaTask(
+                id: UUID(),
+                group: draft.group,
+                title: draft.title,
+                start: draft.start,
+                end: draft.end,
+                completed: false
+            )
+            update(task)
+        }
+        draftTasks.removeAll()
+    }
 }
+
 
