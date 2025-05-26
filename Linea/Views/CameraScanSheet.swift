@@ -162,8 +162,14 @@ struct CameraScanSheet: View {
                                             TextField(
                                                 "Title",
                                                 text: Binding(
-                                                    get: { taskViewModel.draftTasks[idx].title },
-                                                    set: { taskViewModel.draftTasks[idx].title = $0 }
+                                                    get: {
+                                                        guard idx < taskViewModel.draftTasks.count else { return "" }
+                                                        return taskViewModel.draftTasks[idx].title
+                                                    },
+                                                    set: { newValue in
+                                                        guard idx < taskViewModel.draftTasks.count else { return }
+                                                        taskViewModel.draftTasks[idx].title = newValue
+                                                    }
                                                 )
                                             )
                                             .font(.system(size: 20, weight: .semibold))
@@ -171,10 +177,15 @@ struct CameraScanSheet: View {
                                             ScrollView(.horizontal, showsIndicators: false) {
                                                 HStack(spacing: 8) {
                                                     ForEach(Array(taskViewModel.groups), id: \.key) { key, color in
-                                                        GroupBar(group: key,
-                                                                 color: color,
-                                                                 selectedGroup: taskViewModel.draftTasks[idx].group) { _ in
-                                                            // Toggle exactly like AddTaskView, but per-draft
+                                                        GroupBar(
+                                                            group: key,
+                                                            color: color,
+                                                            selectedGroup: {
+                                                                guard idx < taskViewModel.draftTasks.count else { return "" }
+                                                                return taskViewModel.draftTasks[idx].group
+                                                            }()
+                                                        ) { _ in
+                                                            guard idx < taskViewModel.draftTasks.count else { return }
                                                             if taskViewModel.draftTasks[idx].group == key {
                                                                 taskViewModel.draftTasks[idx].group = ""
                                                             } else {
@@ -193,8 +204,14 @@ struct CameraScanSheet: View {
                                                 DatePicker(
                                                     "",
                                                     selection: Binding(
-                                                        get: { taskViewModel.draftTasks[idx].start },
-                                                        set: { taskViewModel.draftTasks[idx].start = $0 }
+                                                        get: {
+                                                            guard idx < taskViewModel.draftTasks.count else { return Date() }
+                                                            return taskViewModel.draftTasks[idx].start
+                                                        },
+                                                        set: { newValue in
+                                                            guard idx < taskViewModel.draftTasks.count else { return }
+                                                            taskViewModel.draftTasks[idx].start = newValue
+                                                        }
                                                     ),
                                                     displayedComponents: [.date, .hourAndMinute]
                                                 )
@@ -209,8 +226,14 @@ struct CameraScanSheet: View {
                                                 DatePicker(
                                                     "",
                                                     selection: Binding(
-                                                        get: { taskViewModel.draftTasks[idx].end },
-                                                        set: { taskViewModel.draftTasks[idx].end = $0 }
+                                                        get: {
+                                                            guard idx < taskViewModel.draftTasks.count else { return Date() }
+                                                            return taskViewModel.draftTasks[idx].end
+                                                        },
+                                                        set: { newValue in
+                                                            guard idx < taskViewModel.draftTasks.count else { return }
+                                                            taskViewModel.draftTasks[idx].end = newValue
+                                                        }
                                                     ),
                                                     displayedComponents: [.date, .hourAndMinute]
                                                 )
@@ -328,11 +351,7 @@ struct CameraScanSheet: View {
                 let time = DateFormatter.hoursMinutes.date(from: a.due_time)
             else { return nil }
 
-            let start = calendar.date(
-                bySettingHour: calendar.component(.hour, from: .now),
-                minute: calendar.component(.minute, from: .now),
-                second: 0,
-                of: monthDay.setting(year: currentYear))!
+            let start = Date()
 
             let end = calendar.date(
                 bySettingHour: calendar.component(.hour, from: time),

@@ -13,7 +13,7 @@ struct TaskBigDetailView: View {
     @Binding var showTaskDetailSheet: Bool
     @Binding var showAddSheet: Bool
     @Binding var editingTask: LineaTask?
-    @Environment(TaskViewModel.self) private var taskViewModel
+    @Environment(TaskViewModel.self) var taskViewModel: TaskViewModel
     @State private var showDeleteConfirmation = false
 
     var body: some View {

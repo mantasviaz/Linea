@@ -12,7 +12,7 @@ import UIKit
 struct TimelineBar: View {
     @Binding var task: LineaTask
     var dayWidth: CGFloat
-    @Environment(TaskViewModel.self) var taskViewModel
+    @Environment(TaskViewModel.self) var taskViewModel: TaskViewModel
     @State private var isDraggingStart = false
     @State private var textWidth: CGFloat = 0
 

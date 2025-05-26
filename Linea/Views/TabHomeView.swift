@@ -189,7 +189,7 @@ struct TabHomeView: View {
                                    dampingFraction: 0.8,
                                    blendDuration: 0.8),
                            value: isPlusExpanded)
-                .zIndex(99)
+                .zIndex(4.5)
 
                 if isPlusExpanded {
                     Color.white
@@ -203,7 +203,7 @@ struct TabHomeView: View {
                             }
                         }
                         .ignoresSafeArea()
-                        .zIndex(98)
+                        .zIndex(4.4)
                 }
                 
 

@@ -9,7 +9,7 @@ import Foundation
 
 struct DateHeaderView: View {
     var dayWidth: CGFloat
-    @Environment(TaskViewModel.self) private var taskViewModel
+    @Environment(TaskViewModel.self) var taskViewModel: TaskViewModel
     private let weekdayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "EEE"
