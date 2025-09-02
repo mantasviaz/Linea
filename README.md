@@ -1,7 +1,7 @@
 # Linea  
 A Reinvented Calendar Experience  
 
-![Login Screen](Linea/render.jpg)
+![Login Screen](render.jpg)
 
 
 ## Role  
