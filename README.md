@@ -1,7 +1,7 @@
 # Linea  
 A Reinvented Calendar Experience  
 
-![Login Screen](https://github.com/mantasviaz/Linea/blob/ffb6a8927ebd852124825c92ba60a432ea4fd01d/Linea/render.jpg)
+![Login Screen](https://github.com/mantasviaz/Linea/blob/7edb8a7c54481c4669e7fb41d5c52a7f60002dd4/Linea/screen.png)
 
 
 ## Role  
